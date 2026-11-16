@@ -1,0 +1,9 @@
+Django==5.2.7
+djangorestframework==3.16.1
+django-cors-headers==4.9.0
+oracledb==3.3.0
+python-dotenv==1.2.1
+django-filter==25.2
+pytest==8.4.2
+pytest-django==4.11.1
+

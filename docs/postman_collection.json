@@ -1,0 +1,25 @@
+{
+  "info": {"name": "SoporteYa API", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
+  "variable": [{"key":"baseUrl","value":"http://localhost:8000/api"},{"key":"ticketId","value":"1"}],
+  "item": [
+    {"name":"Autenticación","item":[
+      {"name":"CSRF","request":{"method":"GET","url":"{{baseUrl}}/auth/csrf/"}},
+      {"name":"Login correcto","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"username\":\"supervisor\",\"password\":\"Cambiar123!\"}"},"url":"{{baseUrl}}/auth/login/"}},
+      {"name":"Quién soy","request":{"method":"GET","url":"{{baseUrl}}/auth/me/"}},
+      {"name":"Logout","request":{"method":"POST","header":[{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"url":"{{baseUrl}}/auth/logout/"}}
+    ]},
+    {"name":"Empresas","item":[
+      {"name":"Listar sin sesión (401)","request":{"method":"GET","url":"{{baseUrl}}/empresas/"}},
+      {"name":"Listar con búsqueda y filtro","request":{"method":"GET","url":"{{baseUrl}}/empresas/?search=Comercial&plan=PREMIUM&page=1"}},
+      {"name":"Crear válida (201)","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"rut\":\"81.111.111-1\",\"razon_social\":\"Empresa Demo SpA\",\"plan\":\"BASICO\",\"activo\":true}"},"url":"{{baseUrl}}/empresas/"}}
+    ]},
+    {"name":"Tickets","item":[
+      {"name":"Crear ticket (201)","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"empresa_id\":1,\"categoria_id\":1,\"tecnico_id\":1,\"titulo\":\"Cuenta de usuario bloqueada\",\"descripcion\":\"El usuario no puede iniciar sesión en su equipo\",\"prioridad\":\"MEDIA\"}"},"url":"{{baseUrl}}/tickets/"}},
+      {"name":"Obtener ID inexistente (404)","request":{"method":"GET","url":"{{baseUrl}}/tickets/999999/"}},
+      {"name":"Agregar comentario","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"texto\":\"Se validó la identidad del usuario.\"}"},"url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/"}},
+      {"name":"Cambio permitido","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"estado\":\"EN_PROGRESO\"}"},"url":"{{baseUrl}}/tickets/{{ticketId}}/estado/"}},
+      {"name":"Reporte","request":{"method":"GET","url":"{{baseUrl}}/reportes/soporte/"}}
+    ]}
+  ]
+}
+
