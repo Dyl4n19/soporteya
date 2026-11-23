@@ -52,10 +52,20 @@ class MasterQuerySerializer(serializers.Serializer):
 
 
 class ComentarioOutputSerializer(serializers.Serializer):
+    id_ticket = serializers.SerializerMethodField()
     numero = serializers.IntegerField()
     fecha = serializers.DateTimeField()
     autor = serializers.CharField()
     texto = serializers.CharField()
+
+    def get_id_ticket(self, obj):
+        if isinstance(obj, dict):
+            return obj["id_ticket"]
+        return getattr(obj, "ticket_id", getattr(obj, "id_ticket", None))
+
+
+class ComentarioInputSerializer(serializers.Serializer):
+    texto = serializers.CharField(min_length=2, max_length=4000)
 
 
 class TicketInputSerializer(serializers.Serializer):
@@ -65,17 +75,33 @@ class TicketInputSerializer(serializers.Serializer):
     titulo = serializers.CharField(min_length=5, max_length=150)
     descripcion = serializers.CharField(min_length=10)
     prioridad = serializers.ChoiceField(choices=["BAJA", "MEDIA", "ALTA", "CRITICA"], default="MEDIA")
+    comentarios = ComentarioInputSerializer(many=True, required=False, max_length=100)
+
+
+class TicketUpdateSerializer(TicketInputSerializer):
+    estado = serializers.ChoiceField(choices=["ABIERTO", "ASIGNADO", "EN_PROGRESO", "RESUELTO", "CERRADO"],
+                                    required=False)
+
+
+class TicketQuerySerializer(serializers.Serializer):
+    search = serializers.CharField(required=False, allow_blank=True, default="")
+    ordering = serializers.CharField(required=False, allow_blank=True)
+    estado = serializers.ChoiceField(choices=["ABIERTO", "ASIGNADO", "EN_PROGRESO", "RESUELTO", "CERRADO"],
+                                    allow_blank=True, required=False)
+    prioridad = serializers.ChoiceField(choices=["BAJA", "MEDIA", "ALTA", "CRITICA"], allow_blank=True, required=False)
+    categoria_id = serializers.IntegerField(min_value=1, required=False)
+    tecnico_id = serializers.IntegerField(min_value=1, required=False)
 
 
 class TicketOutputSerializer(serializers.Serializer):
     id_ticket = serializers.IntegerField()
     empresa_id = serializers.IntegerField()
-    empresa_nombre = serializers.CharField(source="empresa.razon_social")
+    empresa_nombre = serializers.CharField()
     categoria_id = serializers.IntegerField()
-    categoria_nombre = serializers.CharField(source="categoria.nombre")
-    horas_sla = serializers.IntegerField(source="categoria.horas_sla")
+    categoria_nombre = serializers.CharField()
+    horas_sla = serializers.IntegerField()
     tecnico_id = serializers.IntegerField(allow_null=True)
-    tecnico_nombre = serializers.SerializerMethodField()
+    tecnico_nombre = serializers.CharField(allow_null=True)
     titulo = serializers.CharField()
     descripcion = serializers.CharField()
     prioridad = serializers.CharField()
@@ -83,14 +109,6 @@ class TicketOutputSerializer(serializers.Serializer):
     fecha_cierre = serializers.DateTimeField(allow_null=True)
     estado = serializers.CharField()
     comentarios = ComentarioOutputSerializer(many=True)
-
-    def get_tecnico_nombre(self, obj):
-        return obj.tecnico.nombre if obj.tecnico else None
-
-
-class ComentarioInputSerializer(serializers.Serializer):
-    texto = serializers.CharField(min_length=2, max_length=4000)
-
 
 class EstadoInputSerializer(serializers.Serializer):
     estado = serializers.ChoiceField(choices=["ASIGNADO", "EN_PROGRESO", "RESUELTO", "CERRADO"])

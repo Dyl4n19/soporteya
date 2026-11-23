@@ -7,3 +7,4 @@ DATABASES = {
 }
 BUSINESS_DB_ENGINE = "sqlite"
 BUSINESS_MODELS_MANAGED = True
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

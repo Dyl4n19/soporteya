@@ -1,5 +1,4 @@
 class BusinessError(Exception):
-    status_code = 409
     field = None
 
     def __init__(self, message, field=None):
@@ -9,21 +8,21 @@ class BusinessError(Exception):
 
 
 class NotFoundError(BusinessError):
-    status_code = 404
+    pass
 
 
 class DuplicateError(BusinessError):
-    status_code = 409
+    pass
 
 
 class InUseError(BusinessError):
-    status_code = 409
+    pass
 
 
 class RuleViolationError(BusinessError):
-    status_code = 409
+    pass
 
 
 class InvalidStateError(BusinessError):
-    status_code = 409
+    pass
 

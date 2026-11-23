@@ -1,21 +1,22 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
-from django.db import transaction
 from django.middleware.csrf import get_token
-from rest_framework import mixins, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import action, api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from soporte.adapters.api.permissions import IsSupervisorOrReadOnly, TicketRolePermission, user_role
+from soporte.adapters.api.permissions import (ComentarioRolePermission, IsSupervisor, IsSupervisorOrReadOnly,
+                                             TicketRolePermission, user_role)
 from soporte.adapters.api.serializers import (CategoriaInputSerializer, CategoriaOutputSerializer,
     ComentarioInputSerializer, EmpresaInputSerializer, EmpresaOutputSerializer, EstadoInputSerializer,
-    MasterQuerySerializer, TecnicoInputSerializer, TecnicoOutputSerializer, TicketInputSerializer, TicketOutputSerializer)
+    ComentarioOutputSerializer, MasterQuerySerializer, TecnicoInputSerializer, TecnicoOutputSerializer,
+    TicketInputSerializer, TicketOutputSerializer, TicketQuerySerializer, TicketUpdateSerializer)
 from soporte.application.exceptions import NotFoundError
 from soporte.container import categorias, comentarios, empresas, tecnicos, tickets
-from soporte.infrastructure.models import TicketModel
 
 
 class MasterPagination(PageNumberPagination):
@@ -103,58 +104,127 @@ class TecnicoViewSet(MasterViewSet):
     output_serializer_class = TecnicoOutputSerializer
 
 
-class TicketViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
-                    mixins.DestroyModelMixin, viewsets.GenericViewSet):
-    permission_classes = [TicketRolePermission]
-    serializer_class = TicketOutputSerializer
-    search_fields = ["titulo", "descripcion", "empresa__razon_social"]
-    filterset_fields = ["estado", "prioridad", "categoria_id", "tecnico_id"]
+def ticket_for_user(user, pk):
+    try:
+        ticket = tickets.obtener(int(pk))
+    except (ValueError, TypeError) as error:
+        raise NotFoundError("Registro no encontrado") from error
+    if user_role(user) == "TECNICO":
+        if not ticket.id_tecnico or tecnicos.obtener(ticket.id_tecnico).email.casefold() != user.email.casefold():
+            raise NotFoundError("Registro no encontrado")
+    return ticket
 
-    def get_queryset(self):
-        qs = TicketModel.objects.select_related("empresa", "categoria", "tecnico").prefetch_related("comentarios")
-        if user_role(self.request.user) == "TECNICO":
-            qs = qs.filter(tecnico__email__iexact=self.request.user.email)
-        return qs
+
+class TicketViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated, TicketRolePermission]
+    pagination_class = MasterPagination
+    serializer_class = TicketOutputSerializer
+
+    def get_object(self):
+        return ticket_for_user(self.request.user, self.kwargs["pk"])
+
+    def output(self, ticket):
+        return TicketOutputSerializer(tickets.detalles([ticket])[0]).data
+
+    def list(self, request, *args, **kwargs):
+        query = TicketQuerySerializer(data=request.query_params.dict())
+        query.is_valid(raise_exception=True)
+        params = query.validated_data
+        filters = {field: params[field] for field in ("estado", "prioridad", "categoria_id", "tecnico_id")
+                   if field in params and params[field] != ""}
+        if user_role(request.user) == "TECNICO":
+            filters["tecnico_email"] = request.user.email
+        rows = tickets.listar(search=params["search"], filters=filters, ordering=params.get("ordering"))
+        page = self.paginate_queryset(rows)
+        data = TicketOutputSerializer(tickets.detalles(page if page is not None else rows), many=True).data
+        return self.get_paginated_response(data) if page is not None else Response(data)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(self.output(self.get_object()))
 
     def create(self, request, *args, **kwargs):
         serializer = TicketInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        ticket = tickets.crear(dict(serializer.validated_data))
-        ticket = self.get_queryset().get(pk=ticket.id_ticket)
-        return Response(TicketOutputSerializer(ticket).data, status=status.HTTP_201_CREATED)
+        ticket = tickets.crear(dict(serializer.validated_data), request.user.get_full_name() or request.user.username)
+        return Response(self.output(ticket), status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = TicketUpdateSerializer(data=request.data,
+                                            partial=kwargs.get("partial", False) or set(request.data) == {"estado"})
+        serializer.is_valid(raise_exception=True)
+        ticket = tickets.actualizar(instance.id_ticket, dict(serializer.validated_data),
+                                   request.user.get_full_name() or request.user.username)
+        return Response(self.output(ticket))
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        tickets.eliminar(self.get_object().pk)
+        tickets.eliminar(self.get_object().id_ticket)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=["post"], url_path="comentarios")
-    def agregar_comentario(self, request, pk=None):
-        self.get_object()
-        serializer = ComentarioInputSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        comentario = comentarios.agregar(int(pk), request.user.get_full_name() or request.user.username, serializer.validated_data["texto"])
-        return Response({"numero": comentario.numero, "autor": comentario.autor, "texto": comentario.texto}, status=201)
-
     @action(detail=True, methods=["post"], url_path="estado")
-    @transaction.atomic(using="negocio")
     def cambiar_estado(self, request, pk=None):
         self.get_object()
         serializer = EstadoInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         ticket = tickets.cambiar_estado(int(pk), serializer.validated_data["estado"])
-        ticket = self.get_queryset().get(pk=ticket.id_ticket)
-        return Response(TicketOutputSerializer(ticket).data)
+        return Response(self.output(ticket))
+
+
+class ComentarioViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated, ComentarioRolePermission]
+    serializer_class = ComentarioOutputSerializer
+
+    def get_ticket(self):
+        return ticket_for_user(self.request.user, self.kwargs["ticket_pk"])
+
+    def list(self, request, *args, **kwargs):
+        parent = self.get_ticket()
+        return Response(ComentarioOutputSerializer(comentarios.listar(parent.id_ticket), many=True).data)
+
+    def retrieve(self, request, *args, **kwargs):
+        parent = self.get_ticket()
+        return Response(ComentarioOutputSerializer(comentarios.obtener(parent.id_ticket, self.kwargs["numero"])).data)
+
+    def create(self, request, *args, **kwargs):
+        parent = self.get_ticket()
+        serializer = ComentarioInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        comment = comentarios.crear(parent.id_ticket, request.user.get_full_name() or request.user.username,
+                                    serializer.validated_data["texto"])
+        return Response(ComentarioOutputSerializer(comment).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        parent = self.get_ticket()
+        serializer = ComentarioInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        comment = comentarios.actualizar(parent.id_ticket, self.kwargs["numero"], serializer.validated_data["texto"])
+        return Response(ComentarioOutputSerializer(comment).data)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        parent = self.get_ticket()
+        comentarios.eliminar(parent.id_ticket, self.kwargs["numero"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(["GET"])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def csrf_view(request):
     return Response({"csrfToken": get_token(request)})
 
 
 @api_view(["POST"])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def login_view(request):
+    SessionAuthentication().enforce_csrf(request)
     username = request.data.get("username", "")
     password = request.data.get("password", "")
     user = authenticate(request, username=username, password=password)
@@ -162,7 +232,8 @@ def login_view(request):
         return Response({"message": "Credenciales incorrectas", "field": "username"}, status=400)
     login(request, user)
     token, _ = Token.objects.get_or_create(user=user)
-    response = Response({"username": user.username, "name": user.get_full_name(), "role": user_role(user)})
+    response = Response({"username": user.username, "name": user.get_full_name(), "role": user_role(user),
+                         "csrfToken": get_token(request)})
     response.set_cookie(settings.TOKEN_COOKIE_NAME, token.key, httponly=True,
                         secure=settings.TOKEN_COOKIE_SECURE, samesite=settings.TOKEN_COOKIE_SAMESITE)
     return response
@@ -185,6 +256,7 @@ def logout_view(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def reporte_view(request):
     return Response(tickets.reporte())
 

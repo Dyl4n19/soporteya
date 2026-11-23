@@ -15,6 +15,15 @@ class DjangoComentarioRepository:
         return [self.to_entity(instance) for instance in
                 ComentarioModel.objects.using("negocio").filter(ticket_id=ticket_id)]
 
+    def _get_instance(self, ticket_id: int, numero: int):
+        try:
+            return ComentarioModel.objects.using("negocio").get(ticket_id=ticket_id, numero=numero)
+        except ComentarioModel.DoesNotExist as exc:
+            raise NotFoundError("Comentario no encontrado") from exc
+
+    def get(self, ticket_id: int, numero: int) -> Comentario:
+        return self.to_entity(self._get_instance(ticket_id, numero))
+
     def add(self, ticket_id: int, autor: str, texto: str) -> Comentario:
         with transaction.atomic(using="negocio"):
             try:
@@ -27,4 +36,13 @@ class DjangoComentarioRepository:
                 ticket_id=ticket_id, numero=ultimo + 1, autor=autor, texto=texto,
             )
             return self.to_entity(instance)
+
+    def update(self, ticket_id: int, numero: int, texto: str) -> Comentario:
+        instance = self._get_instance(ticket_id, numero)
+        instance.texto = texto
+        instance.save(using="negocio", update_fields=["texto"])
+        return self.to_entity(instance)
+
+    def delete(self, ticket_id: int, numero: int) -> None:
+        self._get_instance(ticket_id, numero).delete(using="negocio")
 

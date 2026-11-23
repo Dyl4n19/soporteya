@@ -2,12 +2,13 @@ from django.db import IntegrityError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
-from soporte.application.exceptions import BusinessError
+from soporte.application.exceptions import BusinessError, NotFoundError
 
 
 def uniform_exception_handler(exc, context):
     if isinstance(exc, BusinessError):
-        return Response({"message": exc.message, "field": exc.field}, status=exc.status_code)
+        status_code = 404 if isinstance(exc, NotFoundError) else 409
+        return Response({"message": exc.message, "field": exc.field}, status=status_code)
     if isinstance(exc, IntegrityError):
         return Response({"message": "Conflicto con los datos existentes", "field": None}, status=409)
     response = exception_handler(exc, context)

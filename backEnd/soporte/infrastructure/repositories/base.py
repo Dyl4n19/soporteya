@@ -13,6 +13,7 @@ class DjangoBaseRepository(Generic[Entity]):
     model = None
     entity_type = None
     field_mapping: dict[str, str] = {}
+    filter_mapping: dict[str, str] = {}
     search_fields: tuple[str, ...] = ()
     filter_fields: tuple[str, ...] = ()
     ordering_fields: tuple[str, ...] = ()
@@ -30,7 +31,7 @@ class DjangoBaseRepository(Generic[Entity]):
         queryset = self.model.objects.using(self.database).all()
         for field, value in (filters or {}).items():
             if field in self.filter_fields:
-                queryset = queryset.filter(**{field: value})
+                queryset = queryset.filter(**{self.filter_mapping.get(field, field): value})
         for term in search.split():
             if self.search_fields:
                 conditions = Q()
