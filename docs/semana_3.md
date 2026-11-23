@@ -1,6 +1,6 @@
 # Semana 3 — SoporteYa, Mesa de Ayuda TI
 
-Entrega individual de Dylan. Verificación: 23 de noviembre de 2026.
+Entrega individual. Verificación: 23 de noviembre de 2026.
 
 Commit de implementación y pruebas: [`5603b21 — feat: completar semana 3 con transacciones y seguridad`](https://github.com/Dyl4n19/soporteya/commit/5603b21), autor Dylan.
 

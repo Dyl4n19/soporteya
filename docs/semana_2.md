@@ -1,6 +1,6 @@
 # Semana 2 — SoporteYa, Mesa de Ayuda TI
 
-Entrega individual de Dylan. Fecha de verificación: 23 de noviembre de 2026.
+Entrega individual. Fecha de verificación: 23 de noviembre de 2026.
 
 Repositorio: [Dyl4n19/soporteya](https://github.com/Dyl4n19/soporteya).
 
