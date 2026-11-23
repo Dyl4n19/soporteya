@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SoporteYa — Evidencia Oracle de semana 1</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef2f8;color:#172441;font:16px/1.45 system-ui,sans-serif}.page{max-width:1100px;margin:30px auto;padding:32px;background:white;border-radius:16px;border:1px solid #d6deeb}header{border-bottom:2px solid #4964d8;padding-bottom:18px}.eyebrow{color:#4964d8;font-weight:700;letter-spacing:.08em;font-size:13px}h1{font-size:30px;margin:8px 0}.subtitle{color:#52617b;margin:0}.status{display:inline-block;background:#e5f5ed;color:#176342;border-radius:6px;padding:7px 12px;font-weight:650;margin-top:18px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0}.stat{padding:13px;background:#f2f5fc;border:1px solid #dce4f2;border-radius:9px}.stat strong{font-size:25px;display:block}.stat span{color:#52617b}table{border-collapse:collapse;width:100%;margin:14px 0}th,td{text-align:left;padding:10px 14px;border-bottom:1px solid #dce4f2}th{background:#edf2fb;color:#344769}td:first-child{font-family:ui-monospace,monospace}pre{font-size:13px;padding:16px;background:#172441;color:#eef4ff;border-radius:9px;white-space:pre-wrap}h2{font-size:18px;margin:22px 0 9px}.note{color:#52617b;font-size:14px}footer{margin-top:18px;border-top:1px solid #dce4f2;padding-top:13px;font-size:13px;color:#52617b}
+</style>
+</head>
+<body><main class="page">
+<header><div class="eyebrow">SEMANA 1 · MESA DE AYUDA TI</div><h1>SoporteYa — Verificación del esquema Oracle</h1><p class="subtitle">Dylan Ortiz · Entrega individual · Consulta: 23/11/2026, 15:42:38 (Europe/Paris)</p></header>
+<div class="status">Conexión SQLNet verificada · Esquema propio confirmado</div>
+<section class="stats"><div class="stat"><strong>5</strong><span>tablas de negocio</span></div><div class="stat"><strong>4</strong><span>claves foráneas</span></div><div class="stat"><strong>5</strong><span>restricciones UNIQUE</span></div><div class="stat"><strong>9</strong><span>CHECK explícitos</span></div></section>
+<h2>Resultado real de USER_TABLES y recuento de registros</h2>
+<table><thead><tr><th>TABLE_NAME</th><th>Registros</th><th>Resultado</th></tr></thead><tbody>
+<tr><td>CATEGORIAS_TICKET</td><td>5</td><td>Presente en esquema propio</td></tr>
+<tr><td>COMENTARIOS_TICKET</td><td>5</td><td>Presente en esquema propio</td></tr>
+<tr><td>EMPRESAS</td><td>5</td><td>Presente en esquema propio</td></tr>
+<tr><td>TECNICOS</td><td>5</td><td>Presente en esquema propio</td></tr>
+<tr><td>TICKETS</td><td>5</td><td>Presente en esquema propio</td></tr>
+</tbody></table>
+<p><strong>PK del detalle:</strong> ID_TICKET + NUMERO · <strong>Router:</strong> negocio → Oracle; default → SQLite.</p>
+<h2>Consulta utilizada</h2>
+<pre>SELECT table_name FROM user_tables
+WHERE table_name IN ('EMPRESAS', 'CATEGORIAS_TICKET', 'TECNICOS',
+                    'TICKETS', 'COMENTARIOS_TICKET')
+ORDER BY table_name;</pre>
+<p class="note">Los recuentos y restricciones se consultaron mediante la conexión Oracle configurada localmente. SESSION_USER y CURRENT_SCHEMA coincidieron. La verificación fue de solo lectura.</p>
+<footer>Captura del informe de verificación del proyecto, basada en una consulta real; no corresponde a la interfaz web de FreeSQL. Resultados completos: semana1_oracle.json. Repetir: python manage.py verificar_semana1 --json.</footer>
+</main></body></html>

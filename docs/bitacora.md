@@ -1,6 +1,6 @@
 # Bitácora del proyecto
 
-Entrega individual. Integrante: Dylan. Los aportes se respaldan con el historial de Git del repositorio `Dyl4n19/soporteya`.
+Entrega individual. Integrante: Dylan Ortiz; el historial de Git utiliza el nombre de autor Dylan. Los aportes se respaldan con el historial del repositorio `Dyl4n19/soporteya`.
 
 ## Semana 1 — Diseño, Oracle y conexión
 
@@ -20,6 +20,15 @@ Entrega individual. Integrante: Dylan. Los aportes se respaldan con el historial
 - `01_crear_tablas.sql` y `02_datos_ejemplo.sql` finalizaron sin errores.
 - Verificación ORM: 5 empresas, 5 categorías, 5 técnicos, 5 tickets y 5 comentarios.
 - La contraseña permanece únicamente en `.env`, archivo excluido por `.gitignore`.
+
+### Cierre documental y comprobación de semana 1 — 23 de noviembre de 2026
+
+- Se preparó `docs/anexo_a.md` con Dylan Ortiz como integrante individual y responsable de las cinco entidades y tareas comunes. El número administrativo de grupo, la sección y la inscripción quedan por confirmar con el docente; G12 identifica el problema desarrollado en la pauta.
+- Se alinearon el diagrama ER y el diccionario con la columna única `id_comentario`, las opciones IDENTITY NOCACHE y la restricción de la fecha de cierre.
+- Se consultaron `USER_TABLES`, `USER_CONSTRAINTS` y `USER_CONS_COLUMNS` del esquema propio y se comprobaron los registros: cinco tablas, cinco filas por tabla, cinco PK, cuatro FK, cinco UNIQUE y nueve CHECK explícitos.
+- La captura del informe de consulta real, sus resultados JSON y el HTML se guardaron en `docs/evidencias/`. La imagen no representa la interfaz web de FreeSQL.
+- Se añadió el comando de solo lectura `verificar_semana1` para reproducir la comprobación sin volver a crear tablas ni modificar datos.
+- Uso de IA: se solicitó apoyo a Codex para completar los documentos y organizar la evidencia; no se inventaron datos administrativos ni una firma.
 
 ## Semana 2 — Dominio, puertos y CRUD de maestras
 

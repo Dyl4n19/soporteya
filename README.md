@@ -8,6 +8,12 @@ Aplicación completa con arquitectura hexagonal, scripts Oracle, CRUD, autentica
 
 La conexión SQLNet con Oracle FreeSQL 26ai fue validada y los scripts cargaron correctamente 5 empresas, 5 categorías, 5 técnicos, 5 tickets y 5 comentarios en el esquema configurado localmente.
 
+## Avance de semana 1
+
+Entrega individual de **Dylan Ortiz**, usuario GitHub `Dyl4n19`, a cargo de las cinco entidades. El [Anexo A](docs/anexo_a.md) identifica el problema y el reparto; el número administrativo de grupo, la sección y la inscripción quedan por confirmar con el docente.
+
+La [guía de semana 1](docs/semana_1.md) contiene el modelo, el diccionario, los scripts, la captura del informe de consulta real a Oracle y el comando `python manage.py verificar_semana1` para repetir la comprobación sin modificar datos.
+
 ## Avance de semana 2
 
 Entrega individual de Dylan. Se implementaron las entidades y puertos de las cinco tablas, las excepciones de negocio y el CRUD de empresas, categorías y técnicos mediante casos de uso y repositorios. Los repositorios devuelven entidades de dominio; los casos de uso no dependen de Django.

@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-11-23T15:42:38+01:00",
+  "database": "Oracle FreeSQL",
+  "own_schema": true,
+  "tables": [
+    {"name": "CATEGORIAS_TICKET", "rows": 5},
+    {"name": "COMENTARIOS_TICKET", "rows": 5},
+    {"name": "EMPRESAS", "rows": 5},
+    {"name": "TECNICOS", "rows": 5},
+    {"name": "TICKETS", "rows": 5}
+  ],
+  "constraints": {"C": 9, "P": 5, "R": 4, "U": 5},
+  "detail_primary_key": ["ID_TICKET", "NUMERO"],
+  "business_route": "negocio",
+  "auth_route": "default",
+  "read_only": true
+}

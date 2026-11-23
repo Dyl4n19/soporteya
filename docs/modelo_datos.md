@@ -44,6 +44,7 @@ erDiagram
     }
 
     COMENTARIOS_TICKET {
+        number id_comentario UK
         number id_ticket PK,FK
         number numero PK
         timestamp fecha
@@ -60,4 +61,6 @@ erDiagram
 - Un ticket puede contener muchos comentarios; cada comentario pertenece a un único ticket.
 
 La clave de `comentarios_ticket` es compuesta por `id_ticket` y `numero`.
+
+`id_comentario` es una columna IDENTITY única utilizada por Django Admin; no reemplaza la clave primaria compuesta del negocio. Las columnas de fecha del diagrama corresponden a `TIMESTAMP WITH TIME ZONE` en Oracle, según el diccionario.
 
