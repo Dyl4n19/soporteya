@@ -8,6 +8,12 @@ Aplicación completa con arquitectura hexagonal, scripts Oracle, CRUD, autentica
 
 La conexión SQLNet con Oracle FreeSQL 26ai fue validada y los scripts cargaron correctamente 5 empresas, 5 categorías, 5 técnicos, 5 tickets y 5 comentarios en el esquema configurado localmente.
 
+## Avance de semana 2
+
+Entrega individual de Dylan. Se implementaron las entidades y puertos de las cinco tablas, las excepciones de negocio y el CRUD de empresas, categorías y técnicos mediante casos de uso y repositorios. Los repositorios devuelven entidades de dominio; los casos de uso no dependen de Django.
+
+La [guía de semana 2](docs/semana_2.md) relaciona cada punto de la pauta con sus archivos y contiene los comandos para demostrarlo. Los aportes están registrados en la [bitácora](docs/bitacora.md) y en el historial de Git.
+
 ## Tecnologías requeridas
 
 - Python 3.12+
@@ -15,7 +21,7 @@ La conexión SQLNet con Oracle FreeSQL 26ai fue validada y los scripts cargaron 
 - Django REST Framework
 - Oracle FreeSQL con `oracledb` en modo thin
 - React + Vite
-- Node.js 20+
+- Node.js 22.12+ y pnpm
 
 ## Estructura
 
@@ -96,6 +102,19 @@ Usuarios demostrativos locales (cambiar antes de entregar):
 
 ```powershell
 cd backEnd
-pytest -q
+python -m pytest -q
 ```
 
+Pytest utiliza `soporteya_project.test_settings`: las dos bases de prueba son SQLite en memoria y no modifican Oracle ni las bases locales de la aplicación.
+
+Para verificar la conexión y las entidades de las cinco tablas en la base configurada:
+
+```powershell
+python manage.py verificar_semana2
+```
+
+Para demostrar además el CRUD de las tres maestras con registros temporales y una transacción que se revierte al terminar:
+
+```powershell
+python manage.py verificar_semana2 --crud
+```
