@@ -14,6 +14,12 @@ Entrega individual de Dylan. Se implementaron las entidades y puertos de las cin
 
 La [guía de semana 2](docs/semana_2.md) relaciona cada punto de la pauta con sus archivos y contiene los comandos para demostrarlo. Los aportes están registrados en la [bitácora](docs/bitacora.md) y en el historial de Git.
 
+## Avance de semana 3
+
+CRUD de las cinco tablas, tickets con comentarios anidados en una transacción, transiciones y reglas R1–R3 en los casos de uso, administrador con búsqueda y filtros, superusuario y dos roles con permisos distintos. Login, logout y `me` utilizan token en cookie HttpOnly y CSRF; el técnico solo accede a sus tickets.
+
+Verificado con 117 pruebas automatizadas, una demostración transaccional en Oracle FreeSQL y revisión de las pantallas en navegador. La [guía de semana 3](docs/semana_3.md) contiene la evidencia, los comandos y el guion de demostración.
+
 ## Tecnologías requeridas
 
 - Python 3.12+
@@ -40,7 +46,7 @@ soporteya/
 
 - R1: para asignar un ticket se exige un técnico activo; para resolverlo debe existir al menos un comentario.
 - R2: los tickets de empresas con plan `PREMIUM` se crean, como mínimo, con prioridad `ALTA`.
-- R3: un ticket está vencido cuando supera las horas de SLA de su categoría sin llegar a `RESUELTO` o `CERRADO`.
+- R3: un ticket está vencido cuando supera las horas de SLA de su categoría sin llegar a `RESUELTO` o `CERRADO`. Se calcula en el caso de uso.
 
 ## Roles
 
@@ -76,15 +82,22 @@ Para Oracle FreeSQL, defina `BUSINESS_DB_ENGINE=oracle`, complete `ORACLE_USER`,
 
 ```powershell
 cd frontend
-pnpm install
+pnpm install --frozen-lockfile
 Copy-Item .env.example .env
 pnpm dev
 ```
 
-Usuarios demostrativos locales (cambiar antes de entregar):
+## Usuarios de demostración local
 
-- `supervisor` / `Cambiar123!`
-- `tecnico` / `Cambiar123!`
+`python manage.py setup_demo` prepara estos usuarios. Las contraseñas de usuarios que ya existían se conservan.
+
+| Usuario | Contraseña inicial | Acceso |
+| --- | --- | --- |
+| `admin` | `CambiarAdmin123!` | Superusuario y panel Django. |
+| `supervisor` | `Cambiar123!` | Rol `SUPERVISOR`, CRUD completo y panel de negocio; no es superusuario. |
+| `tecnico` | `Cambiar123!` | Rol `TECNICO`, consulta y avance de sus tickets y creación de comentarios. |
+
+Administrador: `http://localhost:8000/admin/`. El técnico de demostración se asocia por correo a Camila Rojas. Estos usuarios y contraseñas son exclusivamente para desarrollo local.
 
 ## API principal
 
@@ -93,10 +106,13 @@ Usuarios demostrativos locales (cambiar antes de entregar):
 - `GET /api/auth/me/`
 - `POST /api/auth/logout/`
 - CRUD `/api/empresas/`, `/api/categorias/`, `/api/tecnicos/`
-- `/api/tickets/`
-- `POST /api/tickets/{id}/comentarios/`
+- CRUD `/api/tickets/`, `/api/tickets/{id}/`
+- Comentarios: `GET/POST /api/tickets/{id}/comentarios/`
+- Comentario individual: `GET/PUT/PATCH/DELETE /api/tickets/{id}/comentarios/{numero}/`
 - `POST /api/tickets/{id}/estado/`
 - `GET /api/reportes/soporte/`
+
+Antes del login, pedir `GET /api/auth/csrf/` y enviar el token CSRF en `X-CSRFToken`. Tras el login se renueva el CSRF; la cookie de autenticación es HttpOnly. Las escrituras y el logout requieren la cookie y un CSRF válido. El frontend maneja este flujo y la colección de Postman conserva el CSRF de las respuestas.
 
 ## Pruebas
 
@@ -118,3 +134,11 @@ Para demostrar además el CRUD de las tres maestras con registros temporales y u
 ```powershell
 python manage.py verificar_semana2 --crud
 ```
+
+Para demostrar la semana 3 en la base configurada, incluidos el CRUD de las cinco tablas, las reglas y un fallo controlado del segundo comentario:
+
+```powershell
+python manage.py verificar_semana3 --crud
+```
+
+La demostración utiliza registros temporales y revierte la transacción al finalizar. Para ejecutar solo las comprobaciones de roles y consultas, omitir `--crud`.

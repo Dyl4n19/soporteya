@@ -40,3 +40,26 @@ Entrega individual. Integrante: Dylan. Los aportes se respaldan con el historial
 - Uso de IA: se utilizó Codex como apoyo para implementar y comprobar los cambios. La demostración y la explicación del proyecto corresponden al estudiante.
 - Próximo avance: contrastar la siguiente entrega con la pauta de la semana correspondiente y preparar la demostración de los flujos solicitados.
 
+## Semana 3 — Entidad principal, reglas y seguridad
+
+### Integrante: Dylan
+
+- Fecha de verificación: 23 de noviembre de 2026.
+- Commit de implementación y pruebas: [`5603b21`](https://github.com/Dyl4n19/soporteya/commit/5603b21), `feat: completar semana 3 con transacciones y seguridad`, autor Dylan.
+- Trabajo realizado: completar el CRUD de tickets y comentarios, la creación de tickets con varias líneas de detalle en una sola transacción y el control de estados. Se implementó un puerto de unidad de trabajo que mantiene Django fuera de los casos de uso.
+- Reglas: R1 valida técnico activo y comentario antes de resolver; R2 asegura prioridad mínima ALTA para empresas PREMIUM y rechaza rebajas; R3 calcula el vencimiento por SLA en aplicación, excluyendo tickets resueltos o cerrados.
+- Seguridad: login con CSRF incluso sin sesión, cookie de token HttpOnly, renovación del CSRF al ingresar, logout que revoca el token y acceso por rol. El técnico solo puede consultar y avanzar sus tickets y comentar; las operaciones reservadas devuelven 403.
+- Usuarios: se preparó un superusuario `admin`, un usuario supervisor sin privilegios de superusuario y un técnico, con dos grupos y permisos distintos. El comando `setup_demo` conserva las contraseñas existentes.
+- Administrador: cinco entidades con búsqueda y filtros, comentarios inline, autor y número automáticos, validación de reglas y acciones para cambiar estados mediante casos de uso.
+- Interfaz: creación con varios comentarios iniciales, edición y asignación de tickets abiertos, eliminación de abiertos con su detalle y edición/eliminación de comentarios por el supervisor. Los controles se ajustan al rol.
+- Problemas encontrados: Django no generaba los permisos de modelos ubicados en la carpeta de infraestructura; Oracle thin rechazaba timestamps guardados con zona horaria nombrada y el cálculo anterior del promedio intentaba promediar intervalos como números.
+- Soluciones: exponer los modelos a Django en `soporte/models.py`; crear los permisos mediante migración de la base interna; fijar la sesión Oracle a `+00:00`; calcular el promedio desde las fechas recuperadas; añadir una migración de metadatos que conserva `managed=False` en Oracle y permite el modo SQLite de pruebas.
+- Archivos: `backEnd/soporte/application/use_cases/`, `domain/ports/`, `infrastructure/`, `adapters/api/`, `adapters/admin_forms.py`, `admin.py`, `models.py`, `management/commands/`, `migrations/0002_business_model_management.py` y `frontend/src/App.jsx`.
+- Pruebas: 117 aprobadas en bases SQLite en memoria. Incluyen CRUD de las cinco tablas, transacciones con rollback, estados, R1–R3, permisos, login/logout/me con comprobación real de CSRF y formularios del administrador.
+- Evidencia Oracle: `python manage.py verificar_semana3 --crud` terminó correctamente, conservando los registros originales. Se probaron las cinco tablas, los cambios de estado, R1–R3, el reporte y la reversión al fallar el segundo comentario.
+- Evidencia visual: acceso del supervisor, formulario con varios comentarios y edición de ticket abierto; acceso del técnico mostrando solo su ticket; inicio de sesión del superusuario y listado con búsqueda y filtros en Django Admin. La revisión del navegador no alteró tickets existentes.
+- Compilación: `pnpm build` finalizó correctamente. Django no reportó errores ni cambios de modelos pendientes en la configuración Oracle o la de pruebas.
+- Documentación: guía `docs/semana_3.md`, usuarios y comandos del README y colección de Postman con manejo de CSRF renovado.
+- Uso de IA: se pidió apoyo a Codex para contrastar la pauta e implementar y probar los faltantes. Se ajustaron las reglas al problema de mesa de ayuda, la persistencia a Oracle thin, la transacción principal-detalle y el control de acceso. El estudiante debe poder explicar estos cambios en la defensa.
+- Próximo avance: preparar la demostración y las preguntas individuales de la revisión del backend de semana 4.
+

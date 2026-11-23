@@ -1,6 +1,22 @@
 {
   "info": {"name": "SoporteYa API", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
-  "variable": [{"key":"baseUrl","value":"http://localhost:8000/api"},{"key":"ticketId","value":"1"}],
+  "variable": [{"key":"baseUrl","value":"http://localhost:8000/api"},{"key":"ticketId","value":"1"},{"key":"csrftoken","value":""},{"key":"comentarioNumero","value":"1"}],
+  "event": [
+    {"listen":"prerequest","script":{"type":"text/javascript","exec":[
+      "const csrf = pm.cookies.get('csrftoken');",
+      "if (csrf) pm.collectionVariables.set('csrftoken', csrf);"
+    ]}},
+    {"listen":"test","script":{"type":"text/javascript","exec":[
+      "const csrf = pm.cookies.get('csrftoken');",
+      "if (csrf) pm.collectionVariables.set('csrftoken', csrf);",
+      "try {",
+      "  const data = pm.response.json();",
+      "  if (data.csrfToken) pm.collectionVariables.set('csrftoken', data.csrfToken);",
+      "  if (pm.response.code === 201 && data.id_ticket) pm.collectionVariables.set('ticketId', data.id_ticket);",
+      "  if (data.numero) pm.collectionVariables.set('comentarioNumero', data.numero);",
+      "} catch (_) {}"
+    ]}}
+  ],
   "item": [
     {"name":"Autenticación","item":[
       {"name":"CSRF","request":{"method":"GET","url":"{{baseUrl}}/auth/csrf/"}},
@@ -14,9 +30,13 @@
       {"name":"Crear válida (201)","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"rut\":\"81.111.111-1\",\"razon_social\":\"Empresa Demo SpA\",\"plan\":\"BASICO\",\"activo\":true}"},"url":"{{baseUrl}}/empresas/"}}
     ]},
     {"name":"Tickets","item":[
-      {"name":"Crear ticket (201)","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"empresa_id\":1,\"categoria_id\":1,\"tecnico_id\":1,\"titulo\":\"Cuenta de usuario bloqueada\",\"descripcion\":\"El usuario no puede iniciar sesión en su equipo\",\"prioridad\":\"MEDIA\"}"},"url":"{{baseUrl}}/tickets/"}},
+      {"name":"Crear ticket con dos comentarios (201)","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"empresa_id\":1,\"categoria_id\":1,\"tecnico_id\":1,\"titulo\":\"Cuenta de usuario bloqueada\",\"descripcion\":\"El usuario no puede iniciar sesión en su equipo\",\"prioridad\":\"MEDIA\",\"comentarios\":[{\"texto\":\"Solicitud recibida.\"},{\"texto\":\"Identidad del usuario validada.\"}]}"},"url":"{{baseUrl}}/tickets/"}},
       {"name":"Obtener ID inexistente (404)","request":{"method":"GET","url":"{{baseUrl}}/tickets/999999/"}},
       {"name":"Agregar comentario","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"texto\":\"Se validó la identidad del usuario.\"}"},"url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/"}},
+      {"name":"Listar comentarios","request":{"method":"GET","url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/"}},
+      {"name":"Obtener comentario","request":{"method":"GET","url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/{{comentarioNumero}}/"}},
+      {"name":"Actualizar comentario","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"texto\":\"Diagnóstico actualizado por supervisor.\"}"},"url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/{{comentarioNumero}}/"}},
+      {"name":"Eliminar comentario (204)","request":{"method":"DELETE","header":[{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/{{comentarioNumero}}/"}},
       {"name":"Cambio permitido","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"estado\":\"EN_PROGRESO\"}"},"url":"{{baseUrl}}/tickets/{{ticketId}}/estado/"}},
       {"name":"Reporte","request":{"method":"GET","url":"{{baseUrl}}/reportes/soporte/"}}
     ]}
