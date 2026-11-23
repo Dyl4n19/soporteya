@@ -1,8 +1,9 @@
 from typing import Protocol
 
+from soporte.domain.entities import Empresa
+from .base import RepositoryPort
 
-class EmpresaRepositoryPort(Protocol):
-    def get(self, pk: int): ...
-    def save(self, data: dict): ...
-    def delete(self, pk: int): ...
+
+class EmpresaRepositoryPort(RepositoryPort[Empresa], Protocol):
+    pass
 

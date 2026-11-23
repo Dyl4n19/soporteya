@@ -1,64 +1,106 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
+from django.db import transaction
 from django.middleware.csrf import get_token
 from rest_framework import mixins, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from soporte.adapters.api.permissions import IsSupervisorOrReadOnly, TicketRolePermission, user_role
 from soporte.adapters.api.serializers import (CategoriaInputSerializer, CategoriaOutputSerializer,
     ComentarioInputSerializer, EmpresaInputSerializer, EmpresaOutputSerializer, EstadoInputSerializer,
-    TecnicoInputSerializer, TecnicoOutputSerializer, TicketInputSerializer, TicketOutputSerializer)
-from soporte.container import comentarios, tickets
-from soporte.infrastructure.models import CategoriaModel, EmpresaModel, TecnicoModel, TicketModel
+    MasterQuerySerializer, TecnicoInputSerializer, TecnicoOutputSerializer, TicketInputSerializer, TicketOutputSerializer)
+from soporte.application.exceptions import NotFoundError
+from soporte.container import categorias, comentarios, empresas, tecnicos, tickets
+from soporte.infrastructure.models import TicketModel
 
 
-class MasterViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsSupervisorOrReadOnly]
+class MasterPagination(PageNumberPagination):
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
+class MasterViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated, IsSupervisorOrReadOnly]
+    pagination_class = MasterPagination
     input_serializer_class = None
     output_serializer_class = None
+    use_cases = None
+    filter_fields = ("activo",)
 
     def get_serializer_class(self):
         return self.output_serializer_class if self.action in {"list", "retrieve"} else self.input_serializer_class
 
+    def get_pk(self):
+        try:
+            return int(self.kwargs["pk"])
+        except (ValueError, TypeError) as exc:
+            raise NotFoundError("Registro no encontrado") from exc
+
+    def get_object(self):
+        instance = self.use_cases.obtener(self.get_pk())
+        self.check_object_permissions(self.request, instance)
+        return instance
+
+    def list(self, request, *args, **kwargs):
+        query = MasterQuerySerializer(data=request.query_params.dict())
+        query.is_valid(raise_exception=True)
+        params = query.validated_data
+        filters = {field: params[field] for field in self.filter_fields
+                   if field in params and params[field] != ""}
+        instances = self.use_cases.listar(search=params["search"], filters=filters,
+                                         ordering=params.get("ordering"))
+        page = self.paginate_queryset(instances)
+        if page is not None:
+            return self.get_paginated_response(self.output_serializer_class(page, many=True).data)
+        return Response(self.output_serializer_class(instances, many=True).data)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(self.output_serializer_class(self.get_object()).data)
+
     def create(self, request, *args, **kwargs):
         serializer = self.input_serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+        instance = self.use_cases.crear(dict(serializer.validated_data))
         return Response(self.output_serializer_class(instance).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.input_serializer_class(instance, data=request.data, partial=kwargs.get("partial", False))
         serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+        instance = self.use_cases.actualizar(self.get_pk(), dict(serializer.validated_data))
         return Response(self.output_serializer_class(instance).data)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        self.get_object()
+        self.use_cases.eliminar(self.get_pk())
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class EmpresaViewSet(MasterViewSet):
-    queryset = EmpresaModel.objects.all()
+    use_cases = empresas
     input_serializer_class = EmpresaInputSerializer
     output_serializer_class = EmpresaOutputSerializer
-    search_fields = ["rut", "razon_social"]
-    filterset_fields = ["plan", "activo"]
+    filter_fields = ("plan", "activo")
 
 
 class CategoriaViewSet(MasterViewSet):
-    queryset = CategoriaModel.objects.all()
+    use_cases = categorias
     input_serializer_class = CategoriaInputSerializer
     output_serializer_class = CategoriaOutputSerializer
-    search_fields = ["nombre"]
-    filterset_fields = ["activo"]
 
 
 class TecnicoViewSet(MasterViewSet):
-    queryset = TecnicoModel.objects.all()
+    use_cases = tecnicos
     input_serializer_class = TecnicoInputSerializer
     output_serializer_class = TecnicoOutputSerializer
-    search_fields = ["rut", "nombre", "email"]
-    filterset_fields = ["activo"]
 
 
 class TicketViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
@@ -78,7 +120,7 @@ class TicketViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cre
         serializer = TicketInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         ticket = tickets.crear(dict(serializer.validated_data))
-        ticket = self.get_queryset().get(pk=ticket.pk)
+        ticket = self.get_queryset().get(pk=ticket.id_ticket)
         return Response(TicketOutputSerializer(ticket).data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
@@ -94,12 +136,13 @@ class TicketViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cre
         return Response({"numero": comentario.numero, "autor": comentario.autor, "texto": comentario.texto}, status=201)
 
     @action(detail=True, methods=["post"], url_path="estado")
+    @transaction.atomic(using="negocio")
     def cambiar_estado(self, request, pk=None):
         self.get_object()
         serializer = EstadoInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         ticket = tickets.cambiar_estado(int(pk), serializer.validated_data["estado"])
-        ticket = self.get_queryset().get(pk=ticket.pk)
+        ticket = self.get_queryset().get(pk=ticket.id_ticket)
         return Response(TicketOutputSerializer(ticket).data)
 
 
@@ -143,12 +186,5 @@ def logout_view(request):
 
 @api_view(["GET"])
 def reporte_view(request):
-    vencidos, promedios = tickets.reporte()
-    return Response({
-        "tickets_vencidos": [{"id_ticket": t.pk, "titulo": t.titulo, "empresa": t.empresa.razon_social,
-                               "estado": t.estado, "horas_sla": t.categoria.horas_sla,
-                               "fecha_creacion": t.fecha_creacion} for t in vencidos],
-        "promedio_resolucion_por_tecnico": [{"id_tecnico": x["tecnico_id"], "tecnico": x["tecnico__nombre"],
-                                               "horas_promedio": round(x["promedio"].total_seconds() / 3600, 2)} for x in promedios],
-    })
+    return Response(tickets.reporte())
 

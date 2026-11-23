@@ -1,18 +1,11 @@
 from rest_framework import serializers
 
-from soporte.infrastructure.models import CategoriaModel, ComentarioModel, EmpresaModel, TecnicoModel, TicketModel
-
 
 class EmpresaInputSerializer(serializers.Serializer):
     rut = serializers.CharField(max_length=12)
     razon_social = serializers.CharField(max_length=120)
     plan = serializers.ChoiceField(choices=["BASICO", "PREMIUM"])
     activo = serializers.BooleanField(default=True)
-
-    def create(self, validated_data): return EmpresaModel.objects.create(**validated_data)
-    def update(self, instance, validated_data):
-        for k, v in validated_data.items(): setattr(instance, k, v)
-        instance.save(); return instance
 
 
 class EmpresaOutputSerializer(serializers.Serializer):
@@ -28,11 +21,6 @@ class CategoriaInputSerializer(serializers.Serializer):
     horas_sla = serializers.IntegerField(min_value=1, max_value=8760)
     activo = serializers.BooleanField(default=True)
 
-    def create(self, validated_data): return CategoriaModel.objects.create(**validated_data)
-    def update(self, instance, validated_data):
-        for k, v in validated_data.items(): setattr(instance, k, v)
-        instance.save(); return instance
-
 
 class CategoriaOutputSerializer(serializers.Serializer):
     id_categoria = serializers.IntegerField()
@@ -47,11 +35,6 @@ class TecnicoInputSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=150)
     activo = serializers.BooleanField(default=True)
 
-    def create(self, validated_data): return TecnicoModel.objects.create(**validated_data)
-    def update(self, instance, validated_data):
-        for k, v in validated_data.items(): setattr(instance, k, v)
-        instance.save(); return instance
-
 
 class TecnicoOutputSerializer(serializers.Serializer):
     id_tecnico = serializers.IntegerField()
@@ -59,6 +42,13 @@ class TecnicoOutputSerializer(serializers.Serializer):
     nombre = serializers.CharField()
     email = serializers.EmailField()
     activo = serializers.BooleanField()
+
+
+class MasterQuerySerializer(serializers.Serializer):
+    search = serializers.CharField(required=False, allow_blank=True, default="")
+    ordering = serializers.CharField(required=False, allow_blank=True)
+    activo = serializers.BooleanField(required=False)
+    plan = serializers.ChoiceField(choices=["BASICO", "PREMIUM"], required=False, allow_blank=True)
 
 
 class ComentarioOutputSerializer(serializers.Serializer):

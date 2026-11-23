@@ -15,3 +15,10 @@ class Ticket:
     fecha_creacion: datetime | None = None
     fecha_cierre: datetime | None = None
 
+
+@dataclass(slots=True)
+class PromedioResolucionTecnico:
+    id_tecnico: int
+    tecnico: str
+    horas_promedio: float
+

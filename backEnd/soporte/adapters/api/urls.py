@@ -4,9 +4,9 @@ from rest_framework.routers import DefaultRouter
 from .views import CategoriaViewSet, EmpresaViewSet, TecnicoViewSet, TicketViewSet, csrf_view, login_view, logout_view, me_view, reporte_view
 
 router = DefaultRouter()
-router.register("empresas", EmpresaViewSet)
-router.register("categorias", CategoriaViewSet)
-router.register("tecnicos", TecnicoViewSet)
+router.register("empresas", EmpresaViewSet, basename="empresamodel")
+router.register("categorias", CategoriaViewSet, basename="categoriamodel")
+router.register("tecnicos", TecnicoViewSet, basename="tecnicomodel")
 router.register("tickets", TicketViewSet, basename="ticket")
 
 urlpatterns = [
