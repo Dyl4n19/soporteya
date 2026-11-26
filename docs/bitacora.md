@@ -72,3 +72,19 @@ Entrega individual. Integrante: Dylan Ortiz; el historial de Git utiliza el nomb
 - Uso de IA: se pidió apoyo a Codex para contrastar la pauta e implementar y probar los faltantes. Se ajustaron las reglas al problema de mesa de ayuda, la persistencia a Oracle thin, la transacción principal-detalle y el control de acceso. El estudiante debe poder explicar estos cambios en la defensa.
 - Próximo avance: preparar la demostración y las preguntas individuales de la revisión del backend de semana 4.
 
+## Semana 5 — API REST y Postman
+
+### Integrante: Dylan
+
+- Fecha de verificación: 26 de noviembre de 2026.
+- Trabajo realizado: completar las consultas de comentarios con búsqueda, filtros y paginación; unificar la paginación de las cinco listas; validar campos de entrada y errores anidados; asegurar respuestas JSON y serializar el reporte.
+- DRF y CORS: respuesta y entrada JSON, autenticación con cookie, CSRF, origen autorizado con credenciales y preflight comprobado. Se mantienen los casos de uso separados del adaptador HTTP.
+- Permisos: pruebas de supervisor, técnico, acceso a tickets ajenos y operaciones reservadas. Las pruebas anteriores de administrador, transacciones y R1–R3 se mantienen aprobadas.
+- Problemas encontrados: el detalle se devolvía sin páginas; algunos cuerpos inesperados podían generar errores internos; la colección previa contenía ejemplos sin aserciones ni un recorrido completo. El comando de verificación fuerza la configuración de pruebas para evitar heredar la conexión Oracle del proceso padre.
+- Solución aplicada: serializer de consultas de comentarios, paginación común con tamaño validado, validación de entradas y errores JSON con el campo e índice del detalle; colección completa ordenada con identificadores capturados, cookie y CSRF renovado.
+- Evidencia automatizada: 162 pruebas aprobadas, incluidas 95 solicitudes HTTP reales y 260 aserciones de Postman sin fallos. La integración se ejecutó con Newman 6.2.1 contra un servidor Django y dos bases SQLite temporales. El frontend compiló con `pnpm build`.
+- Archivos principales: `backEnd/soporte/adapters/api/`, repositorio y puerto de comentarios, `test_week5_api.py`, `test_week5_postman.py`, comando `verificar_semana5`, `docs/postman_collection.json` y `docs/evidencias/semana5_api.json`.
+- Documentación: `docs/semana_5.md` relaciona los cinco requisitos con su implementación y contiene los comandos y el guion de Postman.
+- Uso de IA: se utilizó Codex como apoyo para implementar, ejecutar y documentar las comprobaciones. La explicación y demostración del proyecto corresponden al estudiante.
+- Evidencia Oracle: el CRUD transaccional con rollback terminó correctamente; seis consultas del adaptador API mediante el cliente de pruebas de Django devolvieron 200, incluidas búsqueda, filtros y paginación de comentarios. Se conservaron cinco registros por tabla, según `docs/evidencias/semana5_oracle.json`.
+

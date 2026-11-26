@@ -1,0 +1,54 @@
+{
+  "fecha_utc": "2026-11-26T11:54:29.442473+00:00",
+  "motor": "oracle",
+  "comprobacion": "Adaptador API mediante cliente de pruebas Django, supervisor autenticado, consultas sin escrituras",
+  "resultados": [
+    {
+      "ruta": "/api/empresas/",
+      "codigo_http": 200,
+      "total": 5
+    },
+    {
+      "ruta": "/api/categorias/",
+      "codigo_http": 200,
+      "total": 5
+    },
+    {
+      "ruta": "/api/tecnicos/",
+      "codigo_http": 200,
+      "total": 5
+    },
+    {
+      "ruta": "/api/tickets/",
+      "codigo_http": 200,
+      "total": 5
+    },
+    {
+      "ruta": "/api/tickets/{id}/comentarios/",
+      "codigo_http": 200,
+      "busqueda_filtro_orden_paginacion": true
+    },
+    {
+      "ruta": "/api/reportes/soporte/",
+      "codigo_http": 200,
+      "listas_reporte": [
+        "promedio_resolucion_por_tecnico",
+        "tickets_vencidos"
+      ]
+    }
+  ],
+  "registros_antes": {
+    "EMPRESAS": 5,
+    "CATEGORIAS_TICKET": 5,
+    "TECNICOS": 5,
+    "TICKETS": 5,
+    "COMENTARIOS_TICKET": 5
+  },
+  "registros_despues": {
+    "EMPRESAS": 5,
+    "CATEGORIAS_TICKET": 5,
+    "TECNICOS": 5,
+    "TICKETS": 5,
+    "COMENTARIOS_TICKET": 5
+  }
+}

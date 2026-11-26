@@ -1,32 +1,31 @@
+from collections.abc import Mapping
+
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.middleware.csrf import get_token
+from django.http import JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action, api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from soporte.adapters.api.pagination import ApiPagination
 from soporte.adapters.api.permissions import (ComentarioRolePermission, IsSupervisor, IsSupervisorOrReadOnly,
                                              TicketRolePermission, user_role)
 from soporte.adapters.api.serializers import (CategoriaInputSerializer, CategoriaOutputSerializer,
     ComentarioInputSerializer, EmpresaInputSerializer, EmpresaOutputSerializer, EstadoInputSerializer,
-    ComentarioOutputSerializer, MasterQuerySerializer, TecnicoInputSerializer, TecnicoOutputSerializer,
+    ComentarioOutputSerializer, ComentarioQuerySerializer, LoginInputSerializer, MasterQuerySerializer,
+    ReporteSerializer, TecnicoInputSerializer, TecnicoOutputSerializer,
     TicketInputSerializer, TicketOutputSerializer, TicketQuerySerializer, TicketUpdateSerializer)
 from soporte.application.exceptions import NotFoundError
 from soporte.container import categorias, comentarios, empresas, tecnicos, tickets
 
 
-class MasterPagination(PageNumberPagination):
-    page_size_query_param = "page_size"
-    max_page_size = 100
-
-
 class MasterViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsSupervisorOrReadOnly]
-    pagination_class = MasterPagination
+    pagination_class = ApiPagination
     input_serializer_class = None
     output_serializer_class = None
     use_cases = None
@@ -117,7 +116,7 @@ def ticket_for_user(user, pk):
 
 class TicketViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, TicketRolePermission]
-    pagination_class = MasterPagination
+    pagination_class = ApiPagination
     serializer_class = TicketOutputSerializer
 
     def get_object(self):
@@ -151,7 +150,8 @@ class TicketViewSet(viewsets.GenericViewSet):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = TicketUpdateSerializer(data=request.data,
-                                            partial=kwargs.get("partial", False) or set(request.data) == {"estado"})
+                                            partial=kwargs.get("partial", False) or (
+                                                isinstance(request.data, Mapping) and set(request.data) == {"estado"}))
         serializer.is_valid(raise_exception=True)
         ticket = tickets.actualizar(instance.id_ticket, dict(serializer.validated_data),
                                    request.user.get_full_name() or request.user.username)
@@ -177,13 +177,22 @@ class TicketViewSet(viewsets.GenericViewSet):
 class ComentarioViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, ComentarioRolePermission]
     serializer_class = ComentarioOutputSerializer
+    pagination_class = ApiPagination
 
     def get_ticket(self):
         return ticket_for_user(self.request.user, self.kwargs["ticket_pk"])
 
     def list(self, request, *args, **kwargs):
         parent = self.get_ticket()
-        return Response(ComentarioOutputSerializer(comentarios.listar(parent.id_ticket), many=True).data)
+        query = ComentarioQuerySerializer(data=request.query_params.dict())
+        query.is_valid(raise_exception=True)
+        params = query.validated_data
+        filters = {field: params[field] for field in ("autor", "numero") if params.get(field) not in (None, "")}
+        rows = comentarios.listar(parent.id_ticket, search=params["search"], filters=filters,
+                                 ordering=params.get("ordering"))
+        page = self.paginate_queryset(rows)
+        data = ComentarioOutputSerializer(page if page is not None else rows, many=True).data
+        return self.get_paginated_response(data) if page is not None else Response(data)
 
     def retrieve(self, request, *args, **kwargs):
         parent = self.get_ticket()
@@ -225,9 +234,9 @@ def csrf_view(request):
 @permission_classes([AllowAny])
 def login_view(request):
     SessionAuthentication().enforce_csrf(request)
-    username = request.data.get("username", "")
-    password = request.data.get("password", "")
-    user = authenticate(request, username=username, password=password)
+    serializer = LoginInputSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = authenticate(request, **serializer.validated_data)
     if not user:
         return Response({"message": "Credenciales incorrectas", "field": "username"}, status=400)
     login(request, user)
@@ -258,5 +267,9 @@ def logout_view(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsSupervisor])
 def reporte_view(request):
-    return Response(tickets.reporte())
+    return Response(ReporteSerializer(tickets.reporte()).data)
+
+
+def api_not_found(request):
+    return JsonResponse({"message": "Ruta de API no encontrada", "field": None}, status=404)
 

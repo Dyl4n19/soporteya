@@ -1,0 +1,946 @@
+{
+  "fecha_utc": "2026-11-26T11:50:40.028207+00:00",
+  "herramienta": "Newman 6.2.1",
+  "coleccion": "docs/postman_collection.json",
+  "entorno": "Servidor Django real por HTTP; dos bases SQLite de prueba en memoria",
+  "base_real_modificada": false,
+  "solicitudes": {
+    "total": 95,
+    "pending": 0,
+    "failed": 0
+  },
+  "aserciones": {
+    "total": 260,
+    "pending": 0,
+    "failed": 0
+  },
+  "fallos": [],
+  "duracion_ms": 7768,
+  "resultados": [
+    {
+      "nombre": "Preparar CSRF y datos únicos",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "CSRF recibido"
+      ]
+    },
+    {
+      "nombre": "Cerrar sesión anterior",
+      "metodo": "POST",
+      "codigo_http": 401,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 204 o 401"
+      ]
+    },
+    {
+      "nombre": "Anónimo sin acceso",
+      "metodo": "GET",
+      "codigo_http": 401,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 401"
+      ]
+    },
+    {
+      "nombre": "Login incorrecto",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Login supervisor",
+      "metodo": "POST",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Rol supervisor",
+        "Cookie HttpOnly"
+      ]
+    },
+    {
+      "nombre": "Identidad actual",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Identidad supervisor"
+      ]
+    },
+    {
+      "nombre": "Escritura sin CSRF rechazada",
+      "metodo": "POST",
+      "codigo_http": 403,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 403"
+      ]
+    },
+    {
+      "nombre": "Preflight permitido",
+      "metodo": "OPTIONS",
+      "codigo_http": 200,
+      "pruebas": [
+        "HTTP 200",
+        "CORS permite frontend",
+        "CORS permite cookies"
+      ]
+    },
+    {
+      "nombre": "Origen ajeno sin permiso CORS",
+      "metodo": "OPTIONS",
+      "codigo_http": 200,
+      "pruebas": [
+        "HTTP 200",
+        "Sin permiso para origen ajeno"
+      ]
+    },
+    {
+      "nombre": "Crear empresa PREMIUM",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201"
+      ]
+    },
+    {
+      "nombre": "Obtener empresa",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Actualizar empresa con PUT",
+      "metodo": "PUT",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Actualizar empresa con PATCH",
+      "metodo": "PATCH",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Duplicado de empresa",
+      "metodo": "POST",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Empresa con datos inválidos",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Buscar y filtrar empresas",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Empresa filtrada"
+      ]
+    },
+    {
+      "nombre": "Crear empresa libre",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201"
+      ]
+    },
+    {
+      "nombre": "Eliminar empresa libre",
+      "metodo": "DELETE",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Empresa eliminada inexistente",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Crear categoría principal",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201"
+      ]
+    },
+    {
+      "nombre": "Obtener categoría",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Crear segunda categoría",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201"
+      ]
+    },
+    {
+      "nombre": "Actualizar categoría PUT",
+      "metodo": "PUT",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Actualizar categoría PATCH",
+      "metodo": "PATCH",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Categorías búsqueda y página dos",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Segunda página"
+      ]
+    },
+    {
+      "nombre": "Categoría inválida",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Eliminar categoría libre",
+      "metodo": "DELETE",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Crear técnico inactivo",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201"
+      ]
+    },
+    {
+      "nombre": "Obtener técnico",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Actualizar técnico PUT",
+      "metodo": "PUT",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Técnicos búsqueda y filtro",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Técnico filtrado"
+      ]
+    },
+    {
+      "nombre": "Buscar técnico asociado al usuario",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Existe técnico del usuario"
+      ]
+    },
+    {
+      "nombre": "Ruta inexistente",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Identificador inexistente",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Método no permitido",
+      "metodo": "POST",
+      "codigo_http": 405,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 405"
+      ]
+    },
+    {
+      "nombre": "Cuerpo JSON mal formado",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400"
+      ]
+    },
+    {
+      "nombre": "Formato no soportado",
+      "metodo": "POST",
+      "codigo_http": 415,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 415"
+      ]
+    },
+    {
+      "nombre": "Lista en lugar de objeto",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400"
+      ]
+    },
+    {
+      "nombre": "Campo de solo lectura rechazado",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Tamaño de página inválido",
+      "metodo": "GET",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Página inexistente",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Detalle inválido sin guardar principal",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Crear ticket con dos comentarios",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201",
+        "Detalle anidado y R2 PREMIUM"
+      ]
+    },
+    {
+      "nombre": "Ticket con detalle anidado",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Dos detalles persistidos"
+      ]
+    },
+    {
+      "nombre": "R2 rechaza bajar prioridad",
+      "metodo": "PATCH",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "R1 rechaza asignar sin técnico",
+      "metodo": "POST",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "R1 rechaza técnico inactivo",
+      "metodo": "PATCH",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Actualizar técnico PATCH",
+      "metodo": "PATCH",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Eliminar técnico libre",
+      "metodo": "DELETE",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Crear ticket ajeno abierto",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201"
+      ]
+    },
+    {
+      "nombre": "Actualizar ticket abierto con PUT",
+      "metodo": "PUT",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Buscar y filtrar tickets",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Tickets filtrados página dos"
+      ]
+    },
+    {
+      "nombre": "Empresa referenciada protegida",
+      "metodo": "DELETE",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409"
+      ]
+    },
+    {
+      "nombre": "Categoría referenciada protegida",
+      "metodo": "DELETE",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409"
+      ]
+    },
+    {
+      "nombre": "Buscar comentarios y página dos",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Comentarios paginados"
+      ]
+    },
+    {
+      "nombre": "Obtener comentario compuesto",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Actualizar comentario PUT",
+      "metodo": "PUT",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Actualizar comentario PATCH",
+      "metodo": "PATCH",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Filtrar comentario por número",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Filtro número"
+      ]
+    },
+    {
+      "nombre": "Rechazar autor enviado por cliente",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Eliminar segundo comentario",
+      "metodo": "DELETE",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Eliminar primer comentario",
+      "metodo": "DELETE",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Comentario eliminado inexistente",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Sin comentarios después de eliminar",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Sin detalles"
+      ]
+    },
+    {
+      "nombre": "Asignar técnico activo",
+      "metodo": "PATCH",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Estado asignado"
+      ]
+    },
+    {
+      "nombre": "Rechazar salto de estado",
+      "metodo": "POST",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Pasar a en progreso",
+      "metodo": "POST",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "R1 rechaza resolver sin comentario",
+      "metodo": "POST",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Crear comentario de resolución",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201"
+      ]
+    },
+    {
+      "nombre": "Logout supervisor",
+      "metodo": "POST",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Login técnico",
+      "metodo": "POST",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Rol técnico"
+      ]
+    },
+    {
+      "nombre": "Técnico ve solamente sus tickets",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Aislamiento por técnico"
+      ]
+    },
+    {
+      "nombre": "Técnico no puede ampliar filtro a tickets ajenos",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "No aparecen tickets ajenos"
+      ]
+    },
+    {
+      "nombre": "Ticket ajeno oculto",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Comentarios de ticket ajeno ocultos",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Técnico no crea maestras",
+      "metodo": "POST",
+      "codigo_http": 403,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 403"
+      ]
+    },
+    {
+      "nombre": "Técnico no edita cabecera",
+      "metodo": "PATCH",
+      "codigo_http": 403,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 403"
+      ]
+    },
+    {
+      "nombre": "Técnico no elimina ticket",
+      "metodo": "DELETE",
+      "codigo_http": 403,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 403"
+      ]
+    },
+    {
+      "nombre": "Técnico no modifica comentario",
+      "metodo": "PUT",
+      "codigo_http": 403,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 403"
+      ]
+    },
+    {
+      "nombre": "Técnico no consulta reporte global",
+      "metodo": "GET",
+      "codigo_http": 403,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 403"
+      ]
+    },
+    {
+      "nombre": "Técnico puede agregar comentario propio",
+      "metodo": "POST",
+      "codigo_http": 201,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 201"
+      ]
+    },
+    {
+      "nombre": "Técnico avanza su ticket",
+      "metodo": "POST",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Logout técnico",
+      "metodo": "POST",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Volver a supervisor",
+      "metodo": "POST",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Rol supervisor",
+        "Cookie HttpOnly"
+      ]
+    },
+    {
+      "nombre": "Reabrir resuelto",
+      "metodo": "POST",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Resolver nuevamente",
+      "metodo": "POST",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200"
+      ]
+    },
+    {
+      "nombre": "Cerrar ticket",
+      "metodo": "POST",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Cierre persistido"
+      ]
+    },
+    {
+      "nombre": "Ticket cerrado no se reabre",
+      "metodo": "POST",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Ticket cerrado no admite comentarios",
+      "metodo": "POST",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Campo del error"
+      ]
+    },
+    {
+      "nombre": "Reporte SLA y promedio por técnico",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Contrato del reporte",
+        "R3 excluye cerrado y ticket reciente",
+        "R3 incluye ticket vencido de prueba"
+      ]
+    },
+    {
+      "nombre": "Eliminar ticket abierto con detalle",
+      "metodo": "DELETE",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Ticket eliminado inexistente",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Detalles eliminados con principal",
+      "metodo": "GET",
+      "codigo_http": 404,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 404"
+      ]
+    },
+    {
+      "nombre": "Logout final",
+      "metodo": "POST",
+      "codigo_http": 204,
+      "pruebas": [
+        "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Sesión revocada",
+      "metodo": "GET",
+      "codigo_http": 401,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 401"
+      ]
+    }
+  ]
+}

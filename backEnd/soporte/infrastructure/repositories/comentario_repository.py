@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 
 from soporte.application.exceptions import NotFoundError
 from soporte.domain.entities import Comentario
@@ -11,9 +11,19 @@ class DjangoComentarioRepository:
         return Comentario(id_ticket=instance.ticket_id, numero=instance.numero,
                           autor=instance.autor, texto=instance.texto, fecha=instance.fecha)
 
-    def for_ticket(self, ticket_id: int) -> list[Comentario]:
-        return [self.to_entity(instance) for instance in
-                ComentarioModel.objects.using("negocio").filter(ticket_id=ticket_id)]
+    def for_ticket(self, ticket_id: int, *, search: str = "", filters: dict | None = None,
+                   ordering: str | None = None) -> list[Comentario]:
+        rows = ComentarioModel.objects.using("negocio").filter(ticket_id=ticket_id)
+        for field, value in (filters or {}).items():
+            if field in {"autor", "numero"}:
+                rows = rows.filter(**{field: value})
+        for term in search.split():
+            rows = rows.filter(Q(autor__icontains=term) | Q(texto__icontains=term))
+        fields = [field.strip() for field in (ordering or "numero").split(",")
+                  if field.strip().lstrip("-") in {"numero", "fecha", "autor"}]
+        if not any(field.lstrip("-") == "numero" for field in fields):
+            fields.append("numero")
+        return [self.to_entity(instance) for instance in rows.order_by(*fields)]
 
     def _get_instance(self, ticket_id: int, numero: int):
         try:

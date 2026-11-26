@@ -26,6 +26,14 @@ CRUD de las cinco tablas, tickets con comentarios anidados en una transacción, 
 
 Verificado con 117 pruebas automatizadas, una demostración transaccional en Oracle FreeSQL y revisión de las pantallas en navegador. La [guía de semana 3](docs/semana_3.md) contiene la evidencia, los comandos y el guion de demostración.
 
+## Avance de semana 5 — API REST
+
+DRF y CORS configurados, serializers de entrada y salida para las cinco entidades, comentarios anidados en tickets, rutas REST y errores JSON uniformes. Las cinco listas permiten búsqueda, filtros, orden y paginación; los permisos distinguen supervisor y técnico. El reporte incluye tickets vencidos y promedio de resolución por técnico.
+
+Verificado con **162 pruebas aprobadas**, incluidas **95 solicitudes HTTP y 260 comprobaciones de Postman sin fallos**. La [guía de semana 5](docs/semana_5.md) relaciona la pauta con los archivos y explica la demostración. Se incluyen la [colección Postman](docs/postman_collection.json) y su [evidencia de ejecución](docs/evidencias/semana5_api.json), obtenida con bases de prueba temporales.
+
+También se validaron las cinco listas y el reporte de la API contra Oracle, incluida la consulta filtrada y paginada de comentarios. La [evidencia Oracle](docs/evidencias/semana5_oracle.json) confirma las seis respuestas `200` y los registros conservados.
+
 ## Tecnologías requeridas
 
 - Python 3.12+
@@ -148,3 +156,11 @@ python manage.py verificar_semana3 --crud
 ```
 
 La demostración utiliza registros temporales y revierte la transacción al finalizar. Para ejecutar solo las comprobaciones de roles y consultas, omitir `--crud`.
+
+Para verificar esta entrega de API REST, incluida la colección Postman ejecutada por HTTP con cookies y CSRF:
+
+```powershell
+python manage.py verificar_semana5 --postman
+```
+
+Requiere Node.js y pnpm; Newman 6.2.1 se descarga la primera vez. El comando fuerza la configuración de pruebas y prepara sus usuarios y datos en bases temporales. Para ejecutar solo las pruebas de Python, usar `python manage.py verificar_semana5`. Las consultas de listas responden con `count`, `next`, `previous` y `results`; `page_size` admite de 1 a 100 y el tamaño predeterminado es 10.

@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
@@ -30,7 +32,7 @@ class TicketRolePermission(BasePermission):
             return False
         if view.action in {"list", "retrieve", "cambiar_estado"}:
             return True
-        return (view.action in {"update", "partial_update"} and bool(request.data)
+        return (view.action in {"update", "partial_update"} and isinstance(request.data, Mapping) and bool(request.data)
                 and set(request.data) == {"estado"})
 
 

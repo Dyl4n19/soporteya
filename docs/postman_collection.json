@@ -1,45 +1,2954 @@
 {
-  "info": {"name": "SoporteYa API", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
-  "variable": [{"key":"baseUrl","value":"http://localhost:8000/api"},{"key":"ticketId","value":"1"},{"key":"csrftoken","value":""},{"key":"comentarioNumero","value":"1"}],
+  "info": {
+    "name": "SoporteYa API REST — Semana 5",
+    "description": "Ejecutar la colección completa en orden. Cubre CRUD de cinco entidades, detalle anidado, códigos HTTP, errores JSON, cookies, CSRF, CORS, permisos por rol, consultas paginadas, R1–R3 y reporte. Crea registros de demostración; los tickets cerrados se conservan por regla de negocio. Para una ejecución aislada usar python manage.py verificar_semana5 --postman. Las credenciales por defecto son de desarrollo y se pueden cambiar en Variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "frontendOrigin",
+      "value": "http://localhost:5173",
+      "type": "string"
+    },
+    {
+      "key": "supervisorUser",
+      "value": "supervisor",
+      "type": "string"
+    },
+    {
+      "key": "supervisorPassword",
+      "value": "Cambiar123!",
+      "type": "string"
+    },
+    {
+      "key": "tecnicoUser",
+      "value": "tecnico",
+      "type": "string"
+    },
+    {
+      "key": "tecnicoPassword",
+      "value": "Cambiar123!",
+      "type": "string"
+    },
+    {
+      "key": "tecnicoEmail",
+      "value": "camila.rojas@soporteya.cl",
+      "type": "string"
+    },
+    {
+      "key": "csrftoken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fixtureVencidoId",
+      "value": "",
+      "type": "string"
+    }
+  ],
   "event": [
-    {"listen":"prerequest","script":{"type":"text/javascript","exec":[
-      "const csrf = pm.cookies.get('csrftoken');",
-      "if (csrf) pm.collectionVariables.set('csrftoken', csrf);"
-    ]}},
-    {"listen":"test","script":{"type":"text/javascript","exec":[
-      "const csrf = pm.cookies.get('csrftoken');",
-      "if (csrf) pm.collectionVariables.set('csrftoken', csrf);",
-      "try {",
-      "  const data = pm.response.json();",
-      "  if (data.csrfToken) pm.collectionVariables.set('csrftoken', data.csrfToken);",
-      "  if (pm.response.code === 201 && data.id_ticket) pm.collectionVariables.set('ticketId', data.id_ticket);",
-      "  if (data.numero) pm.collectionVariables.set('comentarioNumero', data.numero);",
-      "} catch (_) {}"
-    ]}}
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const csrf = pm.cookies.get(\"csrftoken\");",
+          "if (csrf) pm.collectionVariables.set(\"csrftoken\", csrf);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (pm.response.text()) {",
+          "  pm.test(\"Respuesta JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+          "  const data = pm.response.json();",
+          "  if (data.csrfToken) pm.collectionVariables.set(\"csrftoken\", data.csrfToken);",
+          "  if (pm.response.code >= 400) pm.test(\"Error JSON uniforme\", () => { pm.expect(data).to.have.all.keys(\"message\", \"field\"); pm.expect(data.message).to.be.a(\"string\").and.not.empty; pm.expect(data.field === null || typeof data.field === \"string\").to.eql(true); });",
+          "}"
+        ]
+      }
+    }
   ],
   "item": [
-    {"name":"Autenticación","item":[
-      {"name":"CSRF","request":{"method":"GET","url":"{{baseUrl}}/auth/csrf/"}},
-      {"name":"Login correcto","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"username\":\"supervisor\",\"password\":\"Cambiar123!\"}"},"url":"{{baseUrl}}/auth/login/"}},
-      {"name":"Quién soy","request":{"method":"GET","url":"{{baseUrl}}/auth/me/"}},
-      {"name":"Logout","request":{"method":"POST","header":[{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"url":"{{baseUrl}}/auth/logout/"}}
-    ]},
-    {"name":"Empresas","item":[
-      {"name":"Listar sin sesión (401)","request":{"method":"GET","url":"{{baseUrl}}/empresas/"}},
-      {"name":"Listar con búsqueda y filtro","request":{"method":"GET","url":"{{baseUrl}}/empresas/?search=Comercial&plan=PREMIUM&page=1"}},
-      {"name":"Crear válida (201)","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"rut\":\"81.111.111-1\",\"razon_social\":\"Empresa Demo SpA\",\"plan\":\"BASICO\",\"activo\":true}"},"url":"{{baseUrl}}/empresas/"}}
-    ]},
-    {"name":"Tickets","item":[
-      {"name":"Crear ticket con dos comentarios (201)","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"empresa_id\":1,\"categoria_id\":1,\"tecnico_id\":1,\"titulo\":\"Cuenta de usuario bloqueada\",\"descripcion\":\"El usuario no puede iniciar sesión en su equipo\",\"prioridad\":\"MEDIA\",\"comentarios\":[{\"texto\":\"Solicitud recibida.\"},{\"texto\":\"Identidad del usuario validada.\"}]}"},"url":"{{baseUrl}}/tickets/"}},
-      {"name":"Obtener ID inexistente (404)","request":{"method":"GET","url":"{{baseUrl}}/tickets/999999/"}},
-      {"name":"Agregar comentario","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"texto\":\"Se validó la identidad del usuario.\"}"},"url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/"}},
-      {"name":"Listar comentarios","request":{"method":"GET","url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/"}},
-      {"name":"Obtener comentario","request":{"method":"GET","url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/{{comentarioNumero}}/"}},
-      {"name":"Actualizar comentario","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"texto\":\"Diagnóstico actualizado por supervisor.\"}"},"url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/{{comentarioNumero}}/"}},
-      {"name":"Eliminar comentario (204)","request":{"method":"DELETE","header":[{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"url":"{{baseUrl}}/tickets/{{ticketId}}/comentarios/{{comentarioNumero}}/"}},
-      {"name":"Cambio permitido","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"X-CSRFToken","value":"{{csrftoken}}"}],"body":{"mode":"raw","raw":"{\"estado\":\"EN_PROGRESO\"}"},"url":"{{baseUrl}}/tickets/{{ticketId}}/estado/"}},
-      {"name":"Reporte","request":{"method":"GET","url":"{{baseUrl}}/reportes/soporte/"}}
-    ]}
+    {
+      "name": "01 Sesión, cookie, CSRF y CORS",
+      "item": [
+        {
+          "name": "Preparar CSRF y datos únicos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/csrf/"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const digits = Math.floor(Math.random() * 1000000).toString().padStart(6, \"0\");",
+                  "pm.collectionVariables.set(\"runId\", Date.now().toString(36) + Math.random().toString(36).slice(2, 7));",
+                  "[\"empresa\", \"libre\", \"tecnico\"].forEach((name, index) => pm.collectionVariables.set(\"rut_\" + name, (94 + index) + \".\" + digits.slice(0, 3) + \".\" + digits.slice(3) + \"-1\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"CSRF recibido\", () => pm.expect(pm.response.json().csrfToken).to.be.a(\"string\").and.not.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar sesión anterior",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/logout/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204 o 401\", () => pm.expect([204,401]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anónimo sin acceso",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/empresas/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", () => pm.expect([401]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login incorrecto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{supervisorUser}}\",\n  \"password\": \"incorrecta-{{runId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"username\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login supervisor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{supervisorUser}}\",\n  \"password\": \"{{supervisorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Rol supervisor\", () => pm.expect(pm.response.json().role).to.eql(\"SUPERVISOR\"));",
+                  "pm.collectionVariables.set(\"supervisorName\", pm.response.json().name || pm.response.json().username);",
+                  "pm.test(\"Cookie HttpOnly\", () => pm.expect(pm.response.headers.all().filter(h => h.key.toLowerCase() === \"set-cookie\").some(h => h.value.startsWith(\"soporteya_token=\") && /httponly/i.test(h.value))).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Identidad actual",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Identidad supervisor\", () => pm.expect(pm.response.json().role).to.eql(\"SUPERVISOR\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Escritura sin CSRF rechazada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"No guardar {{runId}}\",\n  \"horas_sla\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.expect([403]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Preflight permitido",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "{{frontendOrigin}}"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "content-type,x-csrftoken"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"CORS permite frontend\", () => pm.expect(pm.response.headers.get(\"Access-Control-Allow-Origin\")).to.eql(pm.variables.get(\"frontendOrigin\")));",
+                  "pm.test(\"CORS permite cookies\", () => pm.expect(pm.response.headers.get(\"Access-Control-Allow-Credentials\")).to.eql(\"true\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Origen ajeno sin permiso CORS",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://ajeno.example"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Sin permiso para origen ajeno\", () => pm.expect(pm.response.headers.has(\"Access-Control-Allow-Origin\")).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 CRUD de empresas, categorías y técnicos",
+      "item": [
+        {
+          "name": "Crear empresa PREMIUM",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"{{rut_empresa}}\",\n  \"razon_social\": \"Empresa S5 {{runId}}\",\n  \"plan\": \"PREMIUM\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set(\"empresaId\", pm.response.json().id_empresa);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener empresa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/empresas/{{empresaId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar empresa con PUT",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/{{empresaId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"{{rut_empresa}}\",\n  \"razon_social\": \"Empresa editada S5 {{runId}}\",\n  \"plan\": \"PREMIUM\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar empresa con PATCH",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/{{empresaId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razon_social\": \"Empresa final S5 {{runId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicado de empresa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"{{rut_empresa}}\",\n  \"razon_social\": \"Empresa S5 {{runId}}\",\n  \"plan\": \"PREMIUM\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"rut\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Empresa con datos inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"\",\n  \"razon_social\": \"Invalida\",\n  \"plan\": \"BASICO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"rut\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar y filtrar empresas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/empresas/?search={{runId}}&plan=PREMIUM&activo=true&ordering=razon_social&page_size=1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Empresa filtrada\", () => { const data = pm.response.json(); pm.expect(data.count).to.eql(1); pm.expect(data.results[0].id_empresa).to.eql(Number(pm.variables.get(\"empresaId\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear empresa libre",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"{{rut_libre}}\",\n  \"razon_social\": \"Empresa libre {{runId}}\",\n  \"plan\": \"BASICO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set(\"empresaLibreId\", pm.response.json().id_empresa);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar empresa libre",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/{{empresaLibreId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Empresa eliminada inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/empresas/{{empresaLibreId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear categoría principal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"A Red S5 {{runId}}\",\n  \"horas_sla\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set(\"categoriaId\", pm.response.json().id_categoria);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener categoría",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/categorias/{{categoriaId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear segunda categoría",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"B Red S5 {{runId}}\",\n  \"horas_sla\": 8\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set(\"categoriaLibreId\", pm.response.json().id_categoria);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar categoría PUT",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/{{categoriaLibreId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"B Red editada S5 {{runId}}\",\n  \"horas_sla\": 12,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar categoría PATCH",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/{{categoriaLibreId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horas_sla\": 16\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Categorías búsqueda y página dos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/categorias/?search={{runId}}&activo=true&ordering=nombre&page_size=1&page=2"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Segunda página\", () => { const data = pm.response.json(); pm.expect(data.count).to.eql(2); pm.expect(data.results).to.have.lengthOf(1); pm.expect(data.results[0].id_categoria).to.eql(Number(pm.variables.get(\"categoriaLibreId\"))); pm.expect(data.previous).to.be.a(\"string\"); pm.expect(data.next).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Categoría inválida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Fuera de rango {{runId}}\",\n  \"horas_sla\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"horas_sla\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar categoría libre",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/{{categoriaLibreId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear técnico inactivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tecnicos/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"{{rut_tecnico}}\",\n  \"nombre\": \"Tecnico S5 {{runId}}\",\n  \"email\": \"s5-{{runId}}@example.invalid\",\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set(\"tecnicoTemporalId\", pm.response.json().id_tecnico);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener técnico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tecnicos/{{tecnicoTemporalId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar técnico PUT",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tecnicos/{{tecnicoTemporalId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"{{rut_tecnico}}\",\n  \"nombre\": \"Tecnico editado S5 {{runId}}\",\n  \"email\": \"s5-{{runId}}@example.invalid\",\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnicos búsqueda y filtro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tecnicos/?search={{runId}}&activo=false&ordering=nombre&page_size=1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Técnico filtrado\", () => pm.expect(pm.response.json().results[0].id_tecnico).to.eql(Number(pm.variables.get(\"tecnicoTemporalId\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar técnico asociado al usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tecnicos/?search={{tecnicoEmail}}&activo=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Existe técnico del usuario\", () => { const rows = pm.response.json().results; const own = rows.find(row => row.email.toLowerCase() === pm.variables.get(\"tecnicoEmail\").toLowerCase()); pm.expect(own, \"Ejecutar seed_business y revisar tecnicoEmail\").to.exist; if (own) pm.collectionVariables.set(\"tecnicoId\", own.id_tecnico); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Contrato REST y errores JSON",
+      "item": [
+        {
+          "name": "Ruta inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/no-existe/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Identificador inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/2147483647/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Método no permitido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me/",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 405\", () => pm.expect([405]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cuerpo JSON mal formado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/",
+            "body": {
+              "mode": "raw",
+              "raw": "{",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Formato no soportado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              },
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/",
+            "body": {
+              "mode": "raw",
+              "raw": "texto",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 415\", () => pm.expect([415]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lista en lugar de objeto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login/",
+            "body": {
+              "mode": "raw",
+              "raw": "[]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Campo de solo lectura rechazado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"No guardar {{runId}}\",\n  \"horas_sla\": 4,\n  \"id_categoria\": 999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"id_categoria\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tamaño de página inválido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/?page_size=0"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"page_size\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Página inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/empresas/?page=999999"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Ticket con detalle, transacción y reglas",
+      "item": [
+        {
+          "name": "Detalle inválido sin guardar principal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresa_id\": \"{{empresaId}}\",\n  \"categoria_id\": \"{{categoriaId}}\",\n  \"tecnico_id\": null,\n  \"titulo\": \"Falla de red S5 {{runId}}\",\n  \"descripcion\": \"Incidente de conectividad en la oficina para la demostracion\",\n  \"prioridad\": \"BAJA\",\n  \"comentarios\": [\n    {\n      \"texto\": \"Comentario valido\"\n    },\n    {\n      \"texto\": \"x\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"comentarios.1.texto\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear ticket con dos comentarios",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresa_id\": \"{{empresaId}}\",\n  \"categoria_id\": \"{{categoriaId}}\",\n  \"tecnico_id\": null,\n  \"titulo\": \"Falla de red S5 {{runId}}\",\n  \"descripcion\": \"Incidente de conectividad en la oficina para la demostracion\",\n  \"prioridad\": \"BAJA\",\n  \"comentarios\": [\n    {\n      \"texto\": \"Diagnostico inicial de red\"\n    },\n    {\n      \"texto\": \"Diagnostico del equipo afectado\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set(\"ticketId\", pm.response.json().id_ticket);",
+                  "pm.test(\"Detalle anidado y R2 PREMIUM\", () => { const data = pm.response.json(); pm.expect(data.comentarios).to.have.lengthOf(2); pm.expect(data.comentarios.map(c => c.numero)).to.eql([1, 2]); pm.expect(data.comentarios.every(c => c.id_ticket === data.id_ticket)).to.eql(true); pm.expect(data.prioridad).to.eql(\"ALTA\"); pm.expect(data.estado).to.eql(\"ABIERTO\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ticket con detalle anidado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Dos detalles persistidos\", () => pm.expect(pm.response.json().comentarios).to.have.lengthOf(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "R2 rechaza bajar prioridad",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prioridad\": \"MEDIA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"prioridad\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "R1 rechaza asignar sin técnico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ASIGNADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"tecnico_id\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "R1 rechaza técnico inactivo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tecnico_id\": \"{{tecnicoTemporalId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"tecnico_id\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar técnico PATCH",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tecnicos/{{tecnicoTemporalId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar técnico libre",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tecnicos/{{tecnicoTemporalId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear ticket ajeno abierto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresa_id\": \"{{empresaId}}\",\n  \"categoria_id\": \"{{categoriaId}}\",\n  \"tecnico_id\": null,\n  \"titulo\": \"Ticket ajeno S5 {{runId}}\",\n  \"descripcion\": \"Incidente de conectividad en la oficina para la demostracion\",\n  \"prioridad\": \"BAJA\",\n  \"comentarios\": [\n    {\n      \"texto\": \"Diagnostico inicial de red\"\n    },\n    {\n      \"texto\": \"Diagnostico del equipo afectado\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set(\"otroTicketId\", pm.response.json().id_ticket);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar ticket abierto con PUT",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{otroTicketId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresa_id\": \"{{empresaId}}\",\n  \"categoria_id\": \"{{categoriaId}}\",\n  \"tecnico_id\": null,\n  \"titulo\": \"Ticket ajeno editado S5 {{runId}}\",\n  \"descripcion\": \"Incidente de conectividad en la oficina para la demostracion\",\n  \"prioridad\": \"ALTA\",\n  \"comentarios\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar y filtrar tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/?search={{runId}}&estado=ABIERTO&prioridad=ALTA&categoria_id={{categoriaId}}&ordering=id_ticket&page_size=1&page=2"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Tickets filtrados página dos\", () => { const data = pm.response.json(); pm.expect(data.count).to.eql(2); pm.expect(data.results[0].id_ticket).to.eql(Number(pm.variables.get(\"otroTicketId\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Empresa referenciada protegida",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/{{empresaId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Categoría referenciada protegida",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/{{categoriaId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 CRUD, búsqueda y paginación de comentarios",
+      "item": [
+        {
+          "name": "Buscar comentarios y página dos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/?search=Diagnostico&autor={{supervisorName}}&ordering=numero&page_size=1&page=2"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Comentarios paginados\", () => { const data = pm.response.json(); pm.expect(data.count).to.eql(2); pm.expect(data.results[0].numero).to.eql(2); pm.expect(data.results[0].id_ticket).to.eql(Number(pm.variables.get(\"ticketId\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener comentario compuesto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/1/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar comentario PUT",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/1/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Diagnostico actualizado por supervisor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar comentario PATCH",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/1/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Diagnostico final por supervisor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar comentario por número",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/?numero=1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Filtro número\", () => pm.expect(pm.response.json().results.map(c => c.numero)).to.eql([1]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar autor enviado por cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"No debe guardarse\",\n  \"autor\": \"suplantado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"autor\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar segundo comentario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/2/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar primer comentario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/1/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comentario eliminado inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/1/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin comentarios después de eliminar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Sin detalles\", () => pm.expect(pm.response.json().count).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Estados, técnico y permisos",
+      "item": [
+        {
+          "name": "Asignar técnico activo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tecnico_id\": \"{{tecnicoId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Estado asignado\", () => pm.expect(pm.response.json().estado).to.eql(\"ASIGNADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar salto de estado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"CERRADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"estado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pasar a en progreso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_PROGRESO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "R1 rechaza resolver sin comentario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RESUELTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"estado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear comentario de resolución",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Reparacion realizada y validada con el usuario\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set(\"comentarioNumero\", pm.response.json().numero);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout supervisor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/logout/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login técnico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{tecnicoUser}}\",\n  \"password\": \"{{tecnicoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Rol técnico\", () => pm.expect(pm.response.json().role).to.eql(\"TECNICO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico ve solamente sus tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/?search={{runId}}&tecnico_id={{tecnicoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Aislamiento por técnico\", () => { const data = pm.response.json(); pm.expect(data.count).to.eql(1); pm.expect(data.results[0].id_ticket).to.eql(Number(pm.variables.get(\"ticketId\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico no puede ampliar filtro a tickets ajenos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/?search={{runId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"No aparecen tickets ajenos\", () => pm.expect(pm.response.json().results.every(t => t.tecnico_id === Number(pm.variables.get(\"tecnicoId\")))).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ticket ajeno oculto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{otroTicketId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comentarios de ticket ajeno ocultos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{otroTicketId}}/comentarios/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico no crea maestras",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categorias/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Prohibido {{runId}}\",\n  \"horas_sla\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.expect([403]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico no edita cabecera",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"No autorizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.expect([403]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico no elimina ticket",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.expect([403]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico no modifica comentario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/{{comentarioNumero}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"No autorizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.expect([403]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico no consulta reporte global",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/reportes/soporte/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.expect([403]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico puede agregar comentario propio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Prueba de conectividad realizada por el tecnico\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Técnico avanza su ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RESUELTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout técnico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/logout/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Volver a supervisor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{supervisorUser}}\",\n  \"password\": \"{{supervisorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Rol supervisor\", () => pm.expect(pm.response.json().role).to.eql(\"SUPERVISOR\"));",
+                  "pm.collectionVariables.set(\"supervisorName\", pm.response.json().name || pm.response.json().username);",
+                  "pm.test(\"Cookie HttpOnly\", () => pm.expect(pm.response.headers.all().filter(h => h.key.toLowerCase() === \"set-cookie\").some(h => h.value.startsWith(\"soporteya_token=\") && /httponly/i.test(h.value))).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reabrir resuelto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_PROGRESO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolver nuevamente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RESUELTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"CERRADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Cierre persistido\", () => { const data = pm.response.json(); pm.expect(data.estado).to.eql(\"CERRADO\"); pm.expect(data.fecha_cierre).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ticket cerrado no se reabre",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/estado/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_PROGRESO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"estado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ticket cerrado no admite comentarios",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/comentarios/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"No guardar en cerrado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
+                  "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"estado\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Reporte, eliminación y logout",
+      "item": [
+        {
+          "name": "Reporte SLA y promedio por técnico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/reportes/soporte/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
+                  "pm.test(\"Contrato del reporte\", () => { const data = pm.response.json(); pm.expect(data.tickets_vencidos).to.be.an(\"array\"); pm.expect(data.promedio_resolucion_por_tecnico).to.be.an(\"array\"); pm.expect(data.promedio_resolucion_por_tecnico.some(t => t.id_tecnico === Number(pm.variables.get(\"tecnicoId\")) && typeof t.horas_promedio === \"number\")).to.eql(true); });",
+                  "pm.test(\"R3 excluye cerrado y ticket reciente\", () => { const ids = pm.response.json().tickets_vencidos.map(t => t.id_ticket); pm.expect(ids).not.to.include(Number(pm.variables.get(\"ticketId\"))); pm.expect(ids).not.to.include(Number(pm.variables.get(\"otroTicketId\"))); });",
+                  "if (pm.variables.get(\"fixtureVencidoId\")) pm.test(\"R3 incluye ticket vencido de prueba\", () => pm.expect(pm.response.json().tickets_vencidos.map(t => t.id_ticket)).to.include(Number(pm.variables.get(\"fixtureVencidoId\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar ticket abierto con detalle",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{otroTicketId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ticket eliminado inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{otroTicketId}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalles eliminados con principal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/{{otroTicketId}}/comentarios/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.expect([404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout final",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/logout/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sesión revocada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", () => pm.expect([401]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
   ]
 }
 

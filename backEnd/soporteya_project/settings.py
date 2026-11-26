@@ -90,18 +90,21 @@ REST_FRAMEWORK = {
         "soporte.adapters.api.authentication.CookieTokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "soporte.adapters.api.pagination.ApiPagination",
     "PAGE_SIZE": 10,
     "EXCEPTION_HANDLER": "soporte.adapters.api.exceptions.uniform_exception_handler",
 }
 
 CORS_ALLOWED_ORIGINS = [os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")]
 CORS_ALLOW_CREDENTIALS = True
+CORS_URLS_REGEX = r"^/api/.*$"
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 TOKEN_COOKIE_NAME = "soporteya_token"
 TOKEN_COOKIE_SECURE = os.getenv("TOKEN_COOKIE_SECURE", "False").lower() == "true"

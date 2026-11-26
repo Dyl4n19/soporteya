@@ -131,7 +131,7 @@ def test_crud_completo_de_comentarios_con_identidad_compuesta(api, business_data
     url = f"/api/tickets/{first_id}/comentarios/"
     assert api.post(url, {"texto": "Texto original"}, format="json").status_code == 201
     assert api.post(f"/api/tickets/{second_id}/comentarios/", {"texto": "Otro ticket"}, format="json").status_code == 201
-    assert len(api.get(url).data) == 1
+    assert api.get(url).data["count"] == 1
     original = api.get(f"{url}1/").data
     assert original["id_ticket"] == first_id
     for method in ("put", "patch"):

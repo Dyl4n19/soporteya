@@ -15,9 +15,10 @@ class ComentarioUseCases:
         if not isinstance(texto, str) or not 2 <= len(texto.strip()) <= 4000:
             raise RuleViolationError("El comentario debe tener entre 2 y 4000 caracteres", "texto")
 
-    def listar(self, ticket_id: int) -> list[Comentario]:
+    def listar(self, ticket_id: int, *, search: str = "", filters: dict | None = None,
+               ordering: str | None = None) -> list[Comentario]:
         self.ticket_repository.get(ticket_id)
-        return self.repository.for_ticket(ticket_id)
+        return self.repository.for_ticket(ticket_id, search=search, filters=filters, ordering=ordering)
 
     def obtener(self, ticket_id: int, numero: int) -> Comentario:
         self.ticket_repository.get(ticket_id)

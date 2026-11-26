@@ -1,7 +1,23 @@
+from collections.abc import Mapping
+
 from rest_framework import serializers
 
 
-class EmpresaInputSerializer(serializers.Serializer):
+class InputSerializer(serializers.Serializer):
+    def to_internal_value(self, data):
+        if isinstance(data, Mapping):
+            unknown = set(data) - set(self.fields)
+            if unknown:
+                raise serializers.ValidationError({field: ["Campo no permitido"] for field in sorted(unknown)})
+        return super().to_internal_value(data)
+
+
+class LoginInputSerializer(InputSerializer):
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(trim_whitespace=False, write_only=True)
+
+
+class EmpresaInputSerializer(InputSerializer):
     rut = serializers.CharField(max_length=12)
     razon_social = serializers.CharField(max_length=120)
     plan = serializers.ChoiceField(choices=["BASICO", "PREMIUM"])
@@ -16,7 +32,7 @@ class EmpresaOutputSerializer(serializers.Serializer):
     activo = serializers.BooleanField()
 
 
-class CategoriaInputSerializer(serializers.Serializer):
+class CategoriaInputSerializer(InputSerializer):
     nombre = serializers.CharField(max_length=80)
     horas_sla = serializers.IntegerField(min_value=1, max_value=8760)
     activo = serializers.BooleanField(default=True)
@@ -29,7 +45,7 @@ class CategoriaOutputSerializer(serializers.Serializer):
     activo = serializers.BooleanField()
 
 
-class TecnicoInputSerializer(serializers.Serializer):
+class TecnicoInputSerializer(InputSerializer):
     rut = serializers.CharField(max_length=12)
     nombre = serializers.CharField(max_length=120)
     email = serializers.EmailField(max_length=150)
@@ -64,11 +80,18 @@ class ComentarioOutputSerializer(serializers.Serializer):
         return getattr(obj, "ticket_id", getattr(obj, "id_ticket", None))
 
 
-class ComentarioInputSerializer(serializers.Serializer):
+class ComentarioInputSerializer(InputSerializer):
     texto = serializers.CharField(min_length=2, max_length=4000)
 
 
-class TicketInputSerializer(serializers.Serializer):
+class ComentarioQuerySerializer(serializers.Serializer):
+    search = serializers.CharField(required=False, allow_blank=True, default="")
+    autor = serializers.CharField(required=False, allow_blank=True)
+    numero = serializers.IntegerField(min_value=1, required=False)
+    ordering = serializers.CharField(required=False, allow_blank=True)
+
+
+class TicketInputSerializer(InputSerializer):
     empresa_id = serializers.IntegerField(min_value=1)
     categoria_id = serializers.IntegerField(min_value=1)
     tecnico_id = serializers.IntegerField(min_value=1, required=False, allow_null=True)
@@ -110,6 +133,26 @@ class TicketOutputSerializer(serializers.Serializer):
     estado = serializers.CharField()
     comentarios = ComentarioOutputSerializer(many=True)
 
-class EstadoInputSerializer(serializers.Serializer):
+class EstadoInputSerializer(InputSerializer):
     estado = serializers.ChoiceField(choices=["ASIGNADO", "EN_PROGRESO", "RESUELTO", "CERRADO"])
+
+
+class TicketVencidoSerializer(serializers.Serializer):
+    id_ticket = serializers.IntegerField()
+    titulo = serializers.CharField()
+    empresa = serializers.CharField()
+    estado = serializers.CharField()
+    horas_sla = serializers.IntegerField()
+    fecha_creacion = serializers.DateTimeField()
+
+
+class PromedioResolucionSerializer(serializers.Serializer):
+    id_tecnico = serializers.IntegerField()
+    tecnico = serializers.CharField()
+    horas_promedio = serializers.FloatField()
+
+
+class ReporteSerializer(serializers.Serializer):
+    tickets_vencidos = TicketVencidoSerializer(many=True)
+    promedio_resolucion_por_tecnico = PromedioResolucionSerializer(many=True)
 
