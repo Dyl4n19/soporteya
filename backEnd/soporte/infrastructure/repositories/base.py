@@ -3,7 +3,8 @@ from dataclasses import fields
 from typing import Generic
 
 from django.db import IntegrityError, transaction
-from django.db.models import Q
+from django.db.models import Q, Value
+from django.db.models.functions import Replace, Upper
 
 from soporte.application.exceptions import DuplicateError, InUseError, NotFoundError
 from soporte.domain.ports.base import Entity
@@ -62,7 +63,12 @@ class DjangoBaseRepository(Generic[Entity]):
                 for field in self.unique_fields:
                     if field not in values:
                         continue
-                    duplicates = self.model.objects.using(self.database).filter(**{field: values[field]})
+                    rows = self.model.objects.using(self.database)
+                    if field == "rut":
+                        compact = Upper(Replace("rut", Value("."), Value("")))
+                        duplicates = rows.alias(rut_compacto=compact).filter(rut_compacto=values[field].replace(".", "").upper())
+                    else:
+                        duplicates = rows.filter(**{field: values[field]})
                     if pk is not None:
                         duplicates = duplicates.exclude(pk=pk)
                     if duplicates.exists():

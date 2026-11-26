@@ -208,7 +208,7 @@ def test_anonimo_no_puede_consultar_maestras(master):
     assert APIClient().get(f"/api/{route}/").status_code == 401
 
 
-def test_tecnico_solo_puede_consultar_maestras(api, master):
+def test_catalogos_de_maestras_reservados_al_supervisor(api, master):
     route, case = master
     url = f"/api/{route}/"
     payload = case["payload"](1)
@@ -217,8 +217,8 @@ def test_tecnico_solo_puede_consultar_maestras(api, master):
     user = User.objects.create_user("tecnico", password="test12345")
     user.groups.add(Group.objects.create(name="TECNICO"))
     api.force_authenticate(user)
-    assert api.get(url).status_code == 200
-    assert api.get(detail).status_code == 200
+    assert api.get(url).status_code == 403
+    assert api.get(detail).status_code == 403
     assert api.post(url, case["payload"](2), format="json").status_code == 403
     assert api.put(detail, payload, format="json").status_code == 403
     assert api.patch(detail, {"activo": False}, format="json").status_code == 403

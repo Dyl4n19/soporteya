@@ -73,7 +73,7 @@ Las reglas viven en aplicación. Los adaptadores traducen las excepciones a JSON
 
 ## Roles y sesiones
 
-El superusuario administra Django. El supervisor, sin ser superusuario, tiene permisos del negocio: CRUD, asignación, estados, comentarios y reporte. El técnico consulta únicamente sus tickets, los avanza y agrega comentarios; no crea ni elimina tickets ni edita o elimina comentarios. Los datos de maestras que necesita consultar son de solo lectura.
+El superusuario administra Django. El supervisor tiene acceso al CRUD, asignaciones, estados, comentarios y reporte. El técnico consulta los datos de empresa y categoría en sus tickets asignados, avanza esos tickets y agrega comentarios. La consulta de los catálogos completos está reservada al supervisor.
 
 El vínculo usuario–técnico se realiza por correo. El usuario `tecnico` de demostración corresponde a Camila Rojas. Un ticket ajeno no aparece en su listado y su acceso directo responde `404`; una operación reservada responde `403`.
 
@@ -85,7 +85,7 @@ Flujo de sesión:
 4. `GET /api/auth/me/` devuelve el usuario y su rol.
 5. `POST /api/auth/logout/`, con CSRF válido, revoca el token y elimina la cookie y la sesión. Una consulta posterior responde `401`.
 
-La API utiliza la cookie para autenticarse. Un encabezado `Authorization` no permite saltarse el requisito de cookie y CSRF. El token de autenticación no se devuelve en el JSON ni se guarda en `localStorage`.
+El navegador se autentica con la cookie HttpOnly. Desde la semana 5, los clientes que omiten la cookie de autenticación pueden identificarse con `Authorization: Token <valor>`. Ambos modos exigen CSRF en escrituras. El logout revoca el token para los dos.
 
 El frontend implementa este flujo. En Postman, ejecutar CSRF y login antes de las peticiones de negocio y dejar logout para el final; la colección actualiza la variable CSRF con la respuesta y las cookies.
 

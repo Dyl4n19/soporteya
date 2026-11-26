@@ -103,14 +103,22 @@ def test_cookie_secure_es_configurable(credentials, settings):
     assert response.cookies[settings.TOKEN_COOKIE_NAME]["secure"] is True
 
 
-def test_encabezado_token_no_permite_eludir_cookie_y_csrf(credentials):
+def test_cliente_postman_usa_token_en_cabecera_y_csrf_en_escrituras(credentials):
     client = APIClient(enforce_csrf_checks=True)
-    user = User.objects.get(username=credentials["username"])
-    token = Token.objects.create(user=user)
-    payload = {"nombre": "Sin omitir CSRF", "horas_sla": 4}
-    assert client.post("/api/categorias/", payload, format="json", HTTP_AUTHORIZATION=f"Token {token.key}").status_code == 401
-    assert login(client, credentials).status_code == 200
-    assert client.post("/api/categorias/", payload, format="json", HTTP_AUTHORIZATION=f"Token {token.key}").status_code == 403
+    response = login(client, credentials)
+    auth = {"HTTP_AUTHORIZATION": f"Token {response.cookies[settings.TOKEN_COOKIE_NAME].value}"}
+    postman = APIClient(enforce_csrf_checks=True)
+    assert postman.get("/api/auth/me/", **auth).json()["role"] == "SUPERVISOR"
+    assert postman.get("/api/auth/me/", HTTP_AUTHORIZATION="Token no-valido").status_code == 401
+    payload = {"nombre": "Prueba Postman", "horas_sla": 4}
+    assert postman.post("/api/categorias/", payload, format="json", **auth).status_code == 403
+    assert client.post("/api/categorias/", payload, format="json", **auth).status_code == 403
+    token_csrf = csrf(postman)
+    response = postman.post("/api/categorias/", payload, format="json", HTTP_X_CSRFTOKEN=token_csrf, **auth)
+    assert response.status_code == 201
+    assert postman.post("/api/auth/logout/", HTTP_X_CSRFTOKEN=token_csrf, **auth).status_code == 204
+    assert postman.get("/api/tickets/", **auth).status_code == 401
+    assert client.get("/api/tickets/").status_code == 401
 
 
 def test_tecnico_solo_ve_avanza_y_comenta_sus_tickets(api, business_data):
@@ -156,6 +164,7 @@ def test_setup_demo_crea_superusuario_y_dos_roles_sin_reiniciar_claves():
     assert tech.groups.filter(name="TECNICO").exists()
     assert lead.has_perm("soporte.delete_ticketmodel")
     assert tech.has_perm("soporte.add_comentariomodel")
+    assert not tech.has_perm("soporte.view_empresamodel")
     assert not tech.has_perm("soporte.delete_ticketmodel")
     assert not tech.has_perm("soporte.add_ticketmodel")
     assert admin.check_password("CambiarAdmin123!")

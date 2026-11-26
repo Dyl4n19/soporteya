@@ -5,9 +5,11 @@ from rest_framework.authentication import SessionAuthentication, TokenAuthentica
 class CookieTokenAuthentication(TokenAuthentication):
     def authenticate(self, request):
         token = request.COOKIES.get(settings.TOKEN_COOKIE_NAME)
-        if not token:
-            return None
-        result = self.authenticate_credentials(token)
-        SessionAuthentication().enforce_csrf(request)
+        if token:
+            result = self.authenticate_credentials(token)
+        else:
+            result = super().authenticate(request)
+        if result is not None:
+            SessionAuthentication().enforce_csrf(request)
         return result
 

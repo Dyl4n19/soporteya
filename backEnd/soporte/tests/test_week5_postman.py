@@ -6,6 +6,7 @@ from io import StringIO
 from pathlib import Path
 
 import pytest
+from django.conf import settings
 from django.core.management import call_command
 
 from soporte.infrastructure.models import CategoriaModel, EmpresaModel, TecnicoModel, TicketModel
@@ -26,23 +27,30 @@ def test_coleccion_postman_por_http_con_cookie_y_csrf(request, live_server, tmp_
                                        descripcion="Incidente antiguo para probar R3", prioridad="MEDIA")
     TicketModel.objects.filter(pk=overdue.pk).update(fecha_creacion=datetime.now(timezone.utc) - timedelta(hours=5))
     project = Path(__file__).resolve().parents[3]
+    collection = project / "docs" / "postman_collection.json"
     full_report = tmp_path / "newman.json"
-    command = [runner, "dlx", "newman@6.2.1", "run", str(project / "docs" / "postman_collection.json"),
+    command = [runner, "dlx", "newman@6.2.1", "run", str(collection),
                "--env-var", f"baseUrl={live_server.url}/api", "--env-var", f"fixtureVencidoId={overdue.pk}",
+               "--env-var", f"frontendOrigin={settings.CORS_ALLOWED_ORIGINS[0]}",
                "--reporters", "json", "--reporter-json-export", str(full_report),
                "--timeout-request", "10000", "--timeout-script", "10000"]
     completed = subprocess.run(command, cwd=project, capture_output=True, text=True, encoding="utf-8",
                                errors="replace", timeout=180)
     assert full_report.exists(), f"Newman no generó el informe: {completed.stderr[-1000:]}"
-    report = json.loads(full_report.read_text(encoding="utf-8"))
+    try:
+        report = json.loads(full_report.read_text(encoding="utf-8"))
+    finally:
+        full_report.unlink()
     run = report["run"]
     failures = [{"request": failure.get("source", {}).get("name", ""),
                  "test": failure.get("error", {}).get("test", failure.get("error", {}).get("name", ""))}
                 for failure in run["failures"]]
     assert not failures, json.dumps(failures, ensure_ascii=False)
     assert completed.returncode == 0
-    assert run["stats"]["requests"]["total"] == 95
-    assert run["stats"]["assertions"]["total"] > 250
+    folders = json.loads(collection.read_text(encoding="utf-8"))["item"]
+    expected = [item["name"] for folder in folders for item in folder["item"]]
+    assert [execution["item"]["name"] for execution in run["executions"]] == expected
+    assert all(execution.get("assertions") for execution in run["executions"])
     evidence = request.config.getoption("--api-evidence")
     if evidence:
         destination = Path(evidence).resolve()

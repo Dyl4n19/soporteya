@@ -17,8 +17,18 @@ class LoginInputSerializer(InputSerializer):
     password = serializers.CharField(trim_whitespace=False, write_only=True)
 
 
-class EmpresaInputSerializer(InputSerializer):
-    rut = serializers.CharField(max_length=12)
+class RutInputSerializer(InputSerializer):
+    rut = serializers.RegexField(
+        r"\A(?:[1-9][0-9]{0,7}|[1-9][0-9]{0,2}\.[0-9]{3}|[1-9][0-9]?\.[0-9]{3}\.[0-9]{3})-[0-9Kk]\Z",
+        max_length=12, error_messages={"invalid": "Ingrese el RUT con guion y dígito verificador, por ejemplo 12.345.678-5"},
+    )
+
+    def validate_rut(self, value):
+        number, digit = value.replace(".", "").split("-")
+        return f"{int(number):,}-{digit.upper()}".replace(",", ".")
+
+
+class EmpresaInputSerializer(RutInputSerializer):
     razon_social = serializers.CharField(max_length=120)
     plan = serializers.ChoiceField(choices=["BASICO", "PREMIUM"])
     activo = serializers.BooleanField(default=True)
@@ -45,8 +55,7 @@ class CategoriaOutputSerializer(serializers.Serializer):
     activo = serializers.BooleanField()
 
 
-class TecnicoInputSerializer(InputSerializer):
-    rut = serializers.CharField(max_length=12)
+class TecnicoInputSerializer(RutInputSerializer):
     nombre = serializers.CharField(max_length=120)
     email = serializers.EmailField(max_length=150)
     activo = serializers.BooleanField(default=True)
@@ -83,6 +92,11 @@ class ComentarioOutputSerializer(serializers.Serializer):
 class ComentarioInputSerializer(InputSerializer):
     texto = serializers.CharField(min_length=2, max_length=4000)
 
+    def validate(self, attrs):
+        if "texto" not in attrs:
+            raise serializers.ValidationError({"texto": self.fields["texto"].error_messages["required"]}, code="required")
+        return attrs
+
 
 class ComentarioQuerySerializer(serializers.Serializer):
     search = serializers.CharField(required=False, allow_blank=True, default="")
@@ -102,6 +116,7 @@ class TicketInputSerializer(InputSerializer):
 
 
 class TicketUpdateSerializer(TicketInputSerializer):
+    vencido = serializers.BooleanField(required=False)
     estado = serializers.ChoiceField(choices=["ABIERTO", "ASIGNADO", "EN_PROGRESO", "RESUELTO", "CERRADO"],
                                     required=False)
 
@@ -123,6 +138,7 @@ class TicketOutputSerializer(serializers.Serializer):
     categoria_id = serializers.IntegerField()
     categoria_nombre = serializers.CharField()
     horas_sla = serializers.IntegerField()
+    vencido = serializers.BooleanField()
     tecnico_id = serializers.IntegerField(allow_null=True)
     tecnico_nombre = serializers.CharField(allow_null=True)
     titulo = serializers.CharField()

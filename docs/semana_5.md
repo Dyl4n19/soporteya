@@ -7,10 +7,10 @@ Entrega individual. Verificación: 26 de noviembre de 2026.
 | Requisito | Implementación y evidencia |
 | --- | --- |
 | 1. DRF y CORS configurados | `backEnd/soporteya_project/settings.py`: DRF, JSON, autenticación con cookie, CSRF, paginación y manejo de errores. `CorsMiddleware` se ejecuta antes de `CommonMiddleware`; el origen de `FRONTEND_ORIGIN` puede usar cookies. Las pruebas comprueban preflight, credenciales y exclusión de otros orígenes. |
-| 2. Serializers de las cinco, detalle anidado | `backEnd/soporte/adapters/api/serializers.py`: entrada y salida de empresas, categorías, técnicos, tickets y comentarios. Un ticket admite varios comentarios al crearse y los devuelve anidados al consultar. Los campos no permitidos se rechazan; un detalle inválido identifica su índice y campo. |
+| 2. Serializers de las cinco, detalle anidado | Los serializers validan largos, rangos, correo y formato del RUT. El servidor asigna las fechas de creación y cierre. El ticket devuelve los nombres relacionados y los comentarios anidados. Una línea inválida identifica su índice y campo. |
 | 3. Rutas REST, códigos HTTP y errores JSON | `urls.py`, `views.py` y `exceptions.py` del adaptador API. CRUD, acción de estado, sesión y reporte. Errores con `message` y `field`, incluidas rutas desconocidas, JSON mal formado, método o formato no permitido. |
 | 4. Permisos por rol, búsqueda, filtro y paginación | `permissions.py`, `pagination.py`, serializers de consulta y repositorios. Supervisor con acceso completo; técnico limitado a sus tickets y operaciones permitidas. Las cinco listas tienen búsqueda, filtros, orden y páginas. |
-| 5. Reporte y colección Postman | `GET /api/reportes/soporte/`, `ReporteSerializer` y caso de uso `TicketUseCases.reporte`. [Colección importable](postman_collection.json) con 95 solicitudes ordenadas y pruebas automáticas. [Evidencia](evidencias/semana5_api.json): 260 comprobaciones sin fallos. |
+| 5. Reporte y colección Postman | `GET /api/reportes/soporte/` entrega vencidos y promedio de resolución por técnico. La colección cubre los 17 casos del Anexo B con 101 solicitudes y 281 comprobaciones aprobadas. [Colección](postman_collection.json) · [Evidencia](evidencias/semana5_api.json). |
 
 Las columnas de entrega y calificación las completa el docente. Esta guía corresponde a la pauta de API REST; no acredita otras semanas ni datos administrativos pendientes.
 
@@ -30,11 +30,11 @@ Se necesitan las dependencias de `requirements.txt`, Node.js y pnpm. `pnpm dlx n
 Resultado obtenido:
 
 ```text
-162 passed
+166 passed
 Semana 5 verificada correctamente.
 ```
 
-Ese total incluye 161 pruebas de Python y una prueba de integración que ejecuta la colección completa: 95 solicitudes y 260 aserciones de Postman. Se comprueban además los casos anteriores de transacciones, reglas, administrador y sesión.
+Ese total incluye 165 pruebas de Python y una integración que ejecuta la colección completa. Postman comprueba el token por cabecera con las cookies desactivadas, los tres conflictos R1–R3 y el listado que devuelve `401` justo después del logout.
 
 Para ejecutar solo Python:
 
@@ -42,7 +42,7 @@ Para ejecutar solo Python:
 .\.venv\Scripts\python.exe manage.py verificar_semana5
 ```
 
-En ese caso la integración Postman se omite explícitamente: 161 pruebas aprobadas y una omitida. Para regenerar una evidencia sin cookies, cabeceras, contraseñas ni cuerpos de respuesta:
+El resultado es `165 passed, 1 skipped` al omitir la integración Postman. Este comando regenera el resumen de solicitudes, códigos HTTP y aserciones.
 
 ```powershell
 .\.venv\Scripts\python.exe manage.py verificar_semana5 --postman --evidencia ..\docs\evidencias\semana5_api.json
@@ -50,7 +50,7 @@ En ese caso la integración Postman se omite explícitamente: 161 pruebas aproba
 
 La evidencia indica que esta ejecución HTTP utiliza SQLite temporal. La comprobación reproducible del esquema Oracle se mantiene disponible mediante `verificar_semana1`; el CRUD y rollback en la base configurada se demuestran con `verificar_semana3 --crud`.
 
-Se comprobaron además seis consultas del adaptador API mediante el cliente de pruebas de Django conectado a Oracle: las cinco listas y el reporte devolvieron `200`. La consulta de comentarios incluyó búsqueda, autor, número, orden y paginación. La [evidencia Oracle](evidencias/semana5_oracle.json) registra los resultados y conserva cinco registros por tabla antes y después. El CRUD transaccional con rollback también terminó correctamente el 26 de noviembre.
+Con el cliente de pruebas de Django conectado a Oracle, las cinco listas y el reporte devolvieron `200`. En una transacción aparte se verificaron un RUT inválido, su normalización, un duplicado guardado sin puntos, un ticket con dos comentarios, el rechazo de un vencimiento contradictorio y un comentario incompleto. Tras el rollback las cinco tablas conservaron sus cinco registros originales. [Resultados de Oracle](evidencias/semana5_oracle.json).
 
 ## Importar la colección en Postman
 
@@ -58,9 +58,11 @@ Se comprobaron además seis consultas del adaptador API mediante el cliente de p
 2. Ejecutar `python manage.py setup_demo`. Para una base SQLite nueva, ejecutar también sus migraciones de negocio y `python manage.py seed_business`.
 3. Importar `docs/postman_collection.json` en Postman.
 4. Revisar las variables de la colección: `baseUrl`, `frontendOrigin`, usuarios y contraseñas. `tecnicoEmail` debe coincidir con el correo del técnico asociado al usuario; por defecto es Camila Rojas.
-5. Ejecutar la colección completa en orden con Collection Runner, una iteración. Las cookies deben estar habilitadas. No se necesita configurar un token en Authorization.
+5. Ejecutar una iteración de la colección en orden, con las cookies habilitadas. Las peticiones de prueba por cabecera desactivan las cookies individualmente y usan el token de la sesión actual.
 
 La colección obtiene los identificadores al crear o buscar registros y genera nombres y RUT de demostración distintos en cada ejecución. El CSRF se actualiza después de cada login. Las contraseñas iniciales son de desarrollo; `setup_demo` conserva las de cuentas existentes.
+
+Para probar la cabecera, la colección lee la cookie HttpOnly de la respuesta de login de Postman, mantiene el valor en una variable temporal de la ejecución y llama a `GET /api/auth/me/` con `Authorization: Token <valor>`. El resultado es `200` con usuario y rol. La petición siguiente usa un token inválido y obtiene `401`. En las escrituras se exige además una cookie CSRF válida y la cabecera `X-CSRFToken`.
 
 Al ejecutar manualmente contra una base persistente se crean datos de demostración. El ticket que llega a `CERRADO`, su empresa, categoría y comentarios se conservan por las reglas de negocio. La ejecución mediante `verificar_semana5 --postman` elimina sus bases temporales al finalizar.
 
@@ -83,7 +85,7 @@ Todas las rutas indicadas requieren la barra final y responden JSON, salvo respu
 | Código de error | Caso |
 | --- | --- |
 | `400` | Validación, JSON mal formado, campos no permitidos o tamaño de página inválido. |
-| `401` | Sin cookie de autenticación válida, también después del logout. |
+| `401` | Credencial de autenticación ausente, inválida o revocada tras el logout. |
 | `403` | Operación sin permiso o CSRF ausente/inválido. |
 | `404` | Recurso o ruta inexistente, página fuera de rango o ticket ajeno al técnico. |
 | `405` | Método no permitido. |
@@ -128,9 +130,11 @@ Ejemplos:
 
 ## Permisos y reporte
 
-El supervisor administra las cinco entidades y consulta el reporte. El técnico consulta maestras, ve sus tickets, avanza sus estados válidos y agrega comentarios. Crear o borrar tickets, editar su cabecera, modificar comentarios existentes y consultar el reporte global son operaciones reservadas. Consultar tickets ajenos devuelve `404`.
+El supervisor administra las cinco entidades y consulta el reporte. El técnico ve la empresa, categoría y detalles de sus tickets asignados, avanza sus estados válidos y agrega comentarios. Consultar los catálogos globales, modificar la cabecera o consultar el reporte con este rol devuelve `403`. Consultar un ticket ajeno devuelve `404`.
 
-El reporte contiene `tickets_vencidos` y `promedio_resolucion_por_tecnico`, en horas numéricas. R3 marca vencido solo después de superar el SLA y excluye `RESUELTO` y `CERRADO`. La prueba de HTTP incluye un ticket de cinco horas con SLA de cuatro; otra prueba comprueba un promedio exacto de dos horas. R3 es una regla de cálculo, no un motivo para impedir una operación con `409`.
+El reporte contiene `tickets_vencidos` y `promedio_resolucion_por_tecnico`, en horas numéricas. R3 considera vencido un ticket que haya superado el SLA y siga sin resolver. La prueba HTTP incluye un ticket de cinco horas con SLA de cuatro. Otra prueba comprueba un promedio exacto de dos horas.
+
+Para el caso 12 del Anexo B, Postman envía `PATCH /api/tickets/{id}/` con `{"vencido": true}` para un ticket recién creado. El caso de uso calcula el vencimiento a partir de la fecha, el estado y el SLA de la categoría. Si el valor enviado contradice el cálculo, responde `409` con el campo `vencido` y revierte la edición. Una actualización normal o un cambio de estado pueden continuar aunque el ticket esté vencido.
 
 ## Referencias técnicas
 

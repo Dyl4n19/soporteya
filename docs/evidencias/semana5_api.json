@@ -1,21 +1,21 @@
 {
-  "fecha_utc": "2026-11-26T11:50:40.028207+00:00",
+  "fecha_utc": "2026-11-26T12:41:46.600204+00:00",
   "herramienta": "Newman 6.2.1",
   "coleccion": "docs/postman_collection.json",
   "entorno": "Servidor Django real por HTTP; dos bases SQLite de prueba en memoria",
   "base_real_modificada": false,
   "solicitudes": {
-    "total": 95,
+    "total": 101,
     "pending": 0,
     "failed": 0
   },
   "aserciones": {
-    "total": 260,
+    "total": 281,
     "pending": 0,
     "failed": 0
   },
   "fallos": [],
-  "duracion_ms": 7768,
+  "duracion_ms": 9398,
   "resultados": [
     {
       "nombre": "Preparar CSRF y datos únicos",
@@ -67,6 +67,26 @@
         "HTTP 200",
         "Rol supervisor",
         "Cookie HttpOnly"
+      ]
+    },
+    {
+      "nombre": "Identidad con Authorization sin cookies",
+      "metodo": "GET",
+      "codigo_http": 200,
+      "pruebas": [
+        "Respuesta JSON",
+        "HTTP 200",
+        "Usuario y rol por cabecera"
+      ]
+    },
+    {
+      "nombre": "Token inválido sin cookies",
+      "metodo": "GET",
+      "codigo_http": 401,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 401"
       ]
     },
     {
@@ -164,6 +184,17 @@
         "Error JSON uniforme",
         "HTTP 400",
         "Campo del error"
+      ]
+    },
+    {
+      "nombre": "RUT con formato incorrecto",
+      "metodo": "POST",
+      "codigo_http": 400,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 400",
+        "Campo rut"
       ]
     },
     {
@@ -434,7 +465,8 @@
       "pruebas": [
         "Respuesta JSON",
         "HTTP 201",
-        "Detalle anidado y R2 PREMIUM"
+        "Detalle anidado y R2 PREMIUM",
+        "El ticket nuevo está dentro del SLA"
       ]
     },
     {
@@ -456,6 +488,17 @@
         "Error JSON uniforme",
         "HTTP 409",
         "Campo del error"
+      ]
+    },
+    {
+      "nombre": "R3 rechaza marcar vencido un ticket dentro del SLA",
+      "metodo": "PATCH",
+      "codigo_http": 409,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 409",
+        "Conflicto en vencido"
       ]
     },
     {
@@ -748,6 +791,16 @@
       ]
     },
     {
+      "nombre": "Catálogo global reservado al supervisor",
+      "metodo": "GET",
+      "codigo_http": 403,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 403"
+      ]
+    },
+    {
       "nombre": "Técnico no crea maestras",
       "metodo": "POST",
       "codigo_http": 403,
@@ -930,6 +983,16 @@
       "codigo_http": 204,
       "pruebas": [
         "HTTP 204"
+      ]
+    },
+    {
+      "nombre": "Listar tickets después de cerrar sesión",
+      "metodo": "GET",
+      "codigo_http": 401,
+      "pruebas": [
+        "Respuesta JSON",
+        "Error JSON uniforme",
+        "HTTP 401"
       ]
     },
     {

@@ -4,7 +4,7 @@ Proyecto final de Programación Back End para la gestión de tickets de una mesa
 
 ## Estado actual
 
-Aplicación completa con arquitectura hexagonal, scripts Oracle, CRUD, autenticación, roles, API REST, pruebas, reporte SLA y frontend React.
+SoporteYa gestiona tickets, empresas, categorías, técnicos y comentarios con Django, Oracle y una interfaz React. El backend expone el CRUD y el reporte de SLA a través de una API REST.
 
 La conexión SQLNet con Oracle FreeSQL 26ai fue validada y los scripts cargaron correctamente 5 empresas, 5 categorías, 5 técnicos, 5 tickets y 5 comentarios en el esquema configurado localmente.
 
@@ -30,9 +30,9 @@ Verificado con 117 pruebas automatizadas, una demostración transaccional en Ora
 
 DRF y CORS configurados, serializers de entrada y salida para las cinco entidades, comentarios anidados en tickets, rutas REST y errores JSON uniformes. Las cinco listas permiten búsqueda, filtros, orden y paginación; los permisos distinguen supervisor y técnico. El reporte incluye tickets vencidos y promedio de resolución por técnico.
 
-Verificado con **162 pruebas aprobadas**, incluidas **95 solicitudes HTTP y 260 comprobaciones de Postman sin fallos**. La [guía de semana 5](docs/semana_5.md) relaciona la pauta con los archivos y explica la demostración. Se incluyen la [colección Postman](docs/postman_collection.json) y su [evidencia de ejecución](docs/evidencias/semana5_api.json), obtenida con bases de prueba temporales.
+Pasaron **166 pruebas**. La colección ejecutó **101 solicitudes HTTP y 281 comprobaciones**, cubriendo los 17 casos del Anexo B con bases temporales. La guía explica cómo repetir la demostración. [Guía de semana 5](docs/semana_5.md) · [Colección Postman](docs/postman_collection.json) · [Resultados](docs/evidencias/semana5_api.json).
 
-También se validaron las cinco listas y el reporte de la API contra Oracle, incluida la consulta filtrada y paginada de comentarios. La [evidencia Oracle](docs/evidencias/semana5_oracle.json) confirma las seis respuestas `200` y los registros conservados.
+En Oracle se comprobaron las cinco listas, el reporte y seis casos con una transacción temporal, entre ellos el RUT duplicado y el conflicto de SLA. Después de revertir la transacción había cinco registros en cada tabla. [Evidencia de Oracle](docs/evidencias/semana5_oracle.json).
 
 ## Tecnologías requeridas
 
@@ -126,7 +126,7 @@ Administrador: `http://localhost:8000/admin/`. El técnico de demostración se a
 - `POST /api/tickets/{id}/estado/`
 - `GET /api/reportes/soporte/`
 
-Antes del login, pedir `GET /api/auth/csrf/` y enviar el token CSRF en `X-CSRFToken`. Tras el login se renueva el CSRF; la cookie de autenticación es HttpOnly. Las escrituras y el logout requieren la cookie y un CSRF válido. El frontend maneja este flujo y la colección de Postman conserva el CSRF de las respuestas.
+Antes del login, pedir `GET /api/auth/csrf/` y enviar el valor recibido en `X-CSRFToken`. Al iniciar sesión se renueva el CSRF y el navegador recibe la cookie de autenticación HttpOnly. Postman también puede enviar el token en la cabecera `Authorization: Token <valor>`. Las escrituras y el logout exigen la cookie CSRF y el encabezado correspondiente en ambos modos.
 
 ## Pruebas
 

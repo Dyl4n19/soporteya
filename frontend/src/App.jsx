@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api, ensureCsrf } from './api'
 
 const AuthContext = createContext(null)
@@ -21,9 +21,17 @@ function Login() {
 
 function Protected({ children }) { const { user } = useAuth(); if (user === undefined) return <div className="center">Cargando sesión…</div>; return user ? children : <Navigate to="/login" /> }
 
+function SupervisorRoutes() {
+  const { user } = useAuth()
+  return user.role === 'SUPERVISOR' ? <Outlet /> : <Navigate to="/tickets" replace />
+}
+
 function Layout({ children }) {
   const { user, logout } = useAuth(); const loc = useLocation()
-  const links = [['/', 'Resumen'], ['/tickets', 'Tickets'], ['/empresas', 'Empresas'], ['/categorias', 'Categorías'], ['/tecnicos', 'Técnicos'], ...(user.role === 'SUPERVISOR' ? [['/reporte', 'Reporte SLA']] : [])]
+  const links = [['/', 'Resumen'], ['/tickets', 'Tickets']]
+  if (user.role === 'SUPERVISOR') {
+    links.push(['/empresas', 'Empresas'], ['/categorias', 'Categorías'], ['/tecnicos', 'Técnicos'], ['/reporte', 'Reporte SLA'])
+  }
   return <div className="app-shell"><aside><div className="logo"><span>SY</span><div><strong>SoporteYa</strong><small>Mesa de ayuda TI</small></div></div><nav>{links.map(([to, label]) => <Link key={to} className={loc.pathname === to ? 'active' : ''} to={to}>{label}</Link>)}</nav><div className="profile"><strong>{user.name || user.username}</strong><small>{user.role}</small><button className="ghost" onClick={logout}>Cerrar sesión</button></div></aside><main className="content">{children}</main></div>
 }
 
@@ -49,7 +57,6 @@ function Tickets() {
 function TicketForm() {
   const nav = useNavigate()
   const { id } = useParams()
-  const { user } = useAuth()
   const [opts, setOpts] = useState({ empresas: [], categorias: [], tecnicos: [] })
   const [form, setForm] = useState({ empresa_id: '', categoria_id: '', tecnico_id: '', titulo: '', descripcion: '', prioridad: 'MEDIA', comentarios: [''] })
   const [error, setError] = useState('')
@@ -63,7 +70,6 @@ function TicketForm() {
       setForm({ empresa_id: ticket.empresa_id, categoria_id: ticket.categoria_id, tecnico_id: ticket.tecnico_id || '', titulo: ticket.titulo, descripcion: ticket.descripcion, prioridad: ticket.prioridad, comentarios: [''] })
     }).catch(e => setError(e.message))
   }, [id, nav])
-  if (user.role !== 'SUPERVISOR') return <Navigate to="/tickets" />
   async function save(e) {
     e.preventDefault(); setSaving(true); setError('')
     try {
@@ -110,6 +116,23 @@ function Masters({type}) { const cfg=masterConfig[type]; const {user}=useAuth();
 
 function Report() { const [data,setData]=useState(null); useEffect(()=>{api('/reportes/soporte/').then(setData)},[]); if(!data)return <div className="center">Calculando reporte…</div>; return <><header><div><p className="eyebrow">Indicadores SLA</p><h1>Reporte operativo</h1></div></header><div className="detail-grid"><section className="panel"><h2>Tickets vencidos</h2><TicketTable rows={data.tickets_vencidos.map(x=>({...x,empresa_nombre:x.empresa,prioridad:'ALTA'}))}/></section><section className="panel"><h2>Promedio de resolución</h2>{data.promedio_resolucion_por_tecnico.map(x=><div className="metric-row"><span>{x.tecnico}</span><strong>{x.horas_promedio} h</strong></div>)}</section></div></> }
 
-function AppRoutes(){return <Routes><Route path="/login" element={<Login/>}/><Route path="*" element={<Protected><Layout><Routes><Route path="/" element={<Dashboard/>}/><Route path="/tickets" element={<Tickets/>}/><Route path="/tickets/nuevo" element={<TicketForm/>}/><Route path="/tickets/:id/editar" element={<TicketForm/>}/><Route path="/tickets/:id" element={<TicketDetail/>}/><Route path="/empresas" element={<Masters type="empresas"/>}/><Route path="/categorias" element={<Masters type="categorias"/>}/><Route path="/tecnicos" element={<Masters type="tecnicos"/>}/><Route path="/reporte" element={<Report/>}/></Routes></Layout></Protected>}/></Routes>}
+function AppRoutes() {
+  return <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="*" element={<Protected><Layout><Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/tickets" element={<Tickets />} />
+      <Route path="/tickets/:id" element={<TicketDetail />} />
+      <Route element={<SupervisorRoutes />}>
+        <Route path="/tickets/nuevo" element={<TicketForm />} />
+        <Route path="/tickets/:id/editar" element={<TicketForm />} />
+        <Route path="/empresas" element={<Masters type="empresas" />} />
+        <Route path="/categorias" element={<Masters type="categorias" />} />
+        <Route path="/tecnicos" element={<Masters type="tecnicos" />} />
+        <Route path="/reporte" element={<Report />} />
+      </Route>
+    </Routes></Layout></Protected>} />
+  </Routes>
+}
 export default function App(){return <AuthProvider><AppRoutes/></AuthProvider>}
 

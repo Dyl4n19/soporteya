@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import SessionAuthentication
@@ -12,8 +13,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from soporte.adapters.api.pagination import ApiPagination
-from soporte.adapters.api.permissions import (ComentarioRolePermission, IsSupervisor, IsSupervisorOrReadOnly,
-                                             TicketRolePermission, user_role)
+from soporte.adapters.api.permissions import ComentarioRolePermission, IsSupervisor, TicketRolePermission, user_role
 from soporte.adapters.api.serializers import (CategoriaInputSerializer, CategoriaOutputSerializer,
     ComentarioInputSerializer, EmpresaInputSerializer, EmpresaOutputSerializer, EstadoInputSerializer,
     ComentarioOutputSerializer, ComentarioQuerySerializer, LoginInputSerializer, MasterQuerySerializer,
@@ -24,7 +24,7 @@ from soporte.container import categorias, comentarios, empresas, tecnicos, ticke
 
 
 class MasterViewSet(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, IsSupervisorOrReadOnly]
+    permission_classes = [IsAuthenticated, IsSupervisor]
     pagination_class = ApiPagination
     input_serializer_class = None
     output_serializer_class = None
@@ -270,6 +270,7 @@ def reporte_view(request):
     return Response(ReporteSerializer(tickets.reporte()).data)
 
 
+@csrf_exempt
 def api_not_found(request):
     return JsonResponse({"message": "Ruta de API no encontrada", "field": None}, status=404)
 

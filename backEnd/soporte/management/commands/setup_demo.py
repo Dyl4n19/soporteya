@@ -12,7 +12,6 @@ class Command(BaseCommand):
         supervisor.permissions.set(business_permissions)
         tecnico.permissions.set(business_permissions.filter(codename__in=[
             "view_ticketmodel", "change_ticketmodel", "view_comentariomodel", "add_comentariomodel",
-            "view_empresamodel", "view_categoriamodel", "view_tecnicomodel",
         ]))
         self.ensure_user("admin", "CambiarAdmin123!", {"email": "admin@soporteya.cl", "first_name": "Administrador",
                                                        "is_staff": True, "is_superuser": True})

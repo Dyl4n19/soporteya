@@ -20,8 +20,8 @@ class DjangoComentarioRepository:
         for term in search.split():
             rows = rows.filter(Q(autor__icontains=term) | Q(texto__icontains=term))
         fields = [field.strip() for field in (ordering or "numero").split(",")
-                  if field.strip().lstrip("-") in {"numero", "fecha", "autor"}]
-        if not any(field.lstrip("-") == "numero" for field in fields):
+                  if field.strip().removeprefix("-") in {"numero", "fecha", "autor"}]
+        if not any(field.removeprefix("-") == "numero" for field in fields):
             fields.append("numero")
         return [self.to_entity(instance) for instance in rows.order_by(*fields)]
 

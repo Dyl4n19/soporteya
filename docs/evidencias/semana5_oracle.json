@@ -1,7 +1,7 @@
 {
-  "fecha_utc": "2026-11-26T11:54:29.442473+00:00",
+  "fecha_utc": "2026-11-26T12:39:36.425037+00:00",
   "motor": "oracle",
-  "comprobacion": "Adaptador API mediante cliente de pruebas Django, supervisor autenticado, consultas sin escrituras",
+  "comprobacion": "Cliente de pruebas Django con supervisor autenticado. Lecturas de las cinco entidades y el reporte. Escrituras con datos temporales en una transacción revertida.",
   "resultados": [
     {
       "ruta": "/api/empresas/",
@@ -35,6 +35,36 @@
         "promedio_resolucion_por_tecnico",
         "tickets_vencidos"
       ]
+    }
+  ],
+  "pruebas_con_rollback": [
+    {
+      "caso": "Formato de RUT inválido",
+      "codigo_http": 400,
+      "campo": "rut"
+    },
+    {
+      "caso": "RUT normalizado al crear empresa",
+      "codigo_http": 201
+    },
+    {
+      "caso": "Mismo RUT previamente guardado sin puntos",
+      "codigo_http": 409,
+      "campo": "rut"
+    },
+    {
+      "caso": "Ticket vigente con dos comentarios",
+      "codigo_http": 201
+    },
+    {
+      "caso": "R3 rechaza un vencimiento contradictorio y revierte la edición",
+      "codigo_http": 409,
+      "campo": "vencido"
+    },
+    {
+      "caso": "Comentario anidado incompleto",
+      "codigo_http": 400,
+      "campo": "comentarios.1.texto"
     }
   ],
   "registros_antes": {

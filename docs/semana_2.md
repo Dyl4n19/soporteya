@@ -46,7 +46,7 @@ Los repositorios traducen modelos ORM a entidades. Por ejemplo, `DjangoEmpresaRe
 - `PUT` reemplaza los campos editables y `PATCH` actualiza parcialmente un registro.
 - `DELETE` elimina un registro si no está relacionado con un ticket.
 
-La entrada se valida en los serializadores. La vista llama al caso de uso, el caso de uso utiliza el puerto y el repositorio realiza la operación en la base `negocio`. El supervisor puede modificar las maestras; el técnico autenticado puede consultarlas.
+La entrada se valida en los serializadores. La vista llama al caso de uso, el caso de uso utiliza el puerto y el repositorio realiza la operación en la base `negocio`. El supervisor administra las maestras. Con los permisos de la entrega de API, el técnico consulta los datos relacionados dentro de sus propios tickets.
 
 Un dato duplicado produce `409`; un identificador inexistente, `404`; una maestra utilizada por un ticket no puede eliminarse y devuelve `409`. Los errores de validación de entrada devuelven `400`. El formato de error es `{"message": "...", "field": "..."}`.
 

@@ -230,7 +230,65 @@
                   "pm.test(\"HTTP 200\", () => pm.expect([200]).to.include(pm.response.code));",
                   "pm.test(\"Rol supervisor\", () => pm.expect(pm.response.json().role).to.eql(\"SUPERVISOR\"));",
                   "pm.collectionVariables.set(\"supervisorName\", pm.response.json().name || pm.response.json().username);",
-                  "pm.test(\"Cookie HttpOnly\", () => pm.expect(pm.response.headers.all().filter(h => h.key.toLowerCase() === \"set-cookie\").some(h => h.value.startsWith(\"soporteya_token=\") && /httponly/i.test(h.value))).to.eql(true));"
+                  "pm.test(\"Cookie HttpOnly\", () => pm.expect(pm.response.headers.all().filter(h => h.key.toLowerCase() === \"set-cookie\").some(h => h.value.startsWith(\"soporteya_token=\") && /httponly/i.test(h.value))).to.eql(true));",
+                  "const tokenCookie = pm.response.headers.all().find(h => h.key.toLowerCase() === \"set-cookie\" && h.value.startsWith(\"soporteya_token=\"));",
+                  "if (tokenCookie) pm.variables.set(\"postmanToken\", tokenCookie.value.split(\";\", 1)[0].slice(\"soporteya_token=\".length));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Identidad con Authorization sin cookies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{postmanToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me/"
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Usuario y rol por cabecera\", () => { const data = pm.response.json(); pm.expect(data.username).to.equal(pm.variables.get(\"supervisorUser\")); pm.expect(data.role).to.equal(\"SUPERVISOR\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Token inválido sin cookies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token demo-invalido"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me/"
+          },
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));",
+                  "pm.variables.unset(\"postmanToken\");"
                 ]
               }
             }
@@ -559,6 +617,44 @@
                 "exec": [
                   "pm.test(\"HTTP 400\", () => pm.expect([400]).to.include(pm.response.code));",
                   "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"rut\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RUT con formato incorrecto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/empresas/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"sin-formato\",\n  \"razon_social\": \"Empresa de demostración\",\n  \"plan\": \"BASICO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Campo rut\", () => pm.expect(pm.response.json().field).to.equal(\"rut\"));"
                 ]
               }
             }
@@ -1394,7 +1490,8 @@
                 "exec": [
                   "pm.test(\"HTTP 201\", () => pm.expect([201]).to.include(pm.response.code));",
                   "if (pm.response.code < 300) pm.collectionVariables.set(\"ticketId\", pm.response.json().id_ticket);",
-                  "pm.test(\"Detalle anidado y R2 PREMIUM\", () => { const data = pm.response.json(); pm.expect(data.comentarios).to.have.lengthOf(2); pm.expect(data.comentarios.map(c => c.numero)).to.eql([1, 2]); pm.expect(data.comentarios.every(c => c.id_ticket === data.id_ticket)).to.eql(true); pm.expect(data.prioridad).to.eql(\"ALTA\"); pm.expect(data.estado).to.eql(\"ABIERTO\"); });"
+                  "pm.test(\"Detalle anidado y R2 PREMIUM\", () => { const data = pm.response.json(); pm.expect(data.comentarios).to.have.lengthOf(2); pm.expect(data.comentarios.map(c => c.numero)).to.eql([1, 2]); pm.expect(data.comentarios.every(c => c.id_ticket === data.id_ticket)).to.eql(true); pm.expect(data.prioridad).to.eql(\"ALTA\"); pm.expect(data.estado).to.eql(\"ABIERTO\"); });",
+                  "pm.test(\"El ticket nuevo está dentro del SLA\", () => pm.expect(pm.response.json().vencido).to.equal(false));"
                 ]
               }
             }
@@ -1453,6 +1550,44 @@
                 "exec": [
                   "pm.test(\"HTTP 409\", () => pm.expect([409]).to.include(pm.response.code));",
                   "pm.test(\"Campo del error\", () => pm.expect(pm.response.json().field).to.eql(\"prioridad\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "R3 rechaza marcar vencido un ticket dentro del SLA",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrftoken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/tickets/{{ticketId}}/",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vencido\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Conflicto en vencido\", () => pm.expect(pm.response.json().field).to.equal(\"vencido\"));"
                 ]
               }
             }
@@ -2336,6 +2471,25 @@
           ]
         },
         {
+          "name": "Catálogo global reservado al supervisor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/empresas/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Técnico no crea maestras",
           "request": {
             "method": "POST",
@@ -2923,6 +3077,25 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"HTTP 204\", () => pm.expect([204]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar tickets después de cerrar sesión",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tickets/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));"
                 ]
               }
             }

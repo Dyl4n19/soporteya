@@ -43,6 +43,7 @@ class TicketUseCases:
         companies = {row.id_empresa: row for row in self.empresas.list()}
         categories = {row.id_categoria: row for row in self.categorias.list()}
         technicians = {row.id_tecnico: row for row in self.tecnicos.list()}
+        ahora = datetime.now(timezone.utc)
         result = []
         for ticket in rows:
             data = asdict(ticket)
@@ -52,6 +53,7 @@ class TicketUseCases:
             data["empresa_nombre"] = companies[ticket.id_empresa].razon_social
             data["categoria_nombre"] = categories[ticket.id_categoria].nombre
             data["horas_sla"] = categories[ticket.id_categoria].horas_sla
+            data["vencido"] = self.esta_vencido(ticket, data["horas_sla"], ahora)
             data["tecnico_nombre"] = technicians[ticket.id_tecnico].nombre if ticket.id_tecnico else None
             data["comentarios"] = [asdict(comment) for comment in self.comentarios.for_ticket(ticket.id_ticket)]
             result.append(data)
@@ -131,6 +133,10 @@ class TicketUseCases:
                     "estado": next_state,
                     "fecha_cierre": datetime.now(timezone.utc) if next_state == "CERRADO" else None,
                 }, ticket_id)
+            if "vencido" in data:
+                horas_sla = self.categorias.get(ticket.id_categoria).horas_sla
+                if data["vencido"] != self.esta_vencido(ticket, horas_sla, datetime.now(timezone.utc)):
+                    raise RuleViolationError("El vencimiento indicado no coincide con el SLA calculado del ticket", "vencido")
             return ticket
 
     def validar_transicion(self, ticket: Ticket, nuevo_estado: str) -> None:

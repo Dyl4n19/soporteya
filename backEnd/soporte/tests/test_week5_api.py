@@ -8,7 +8,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from soporte.container import tickets
-from soporte.infrastructure.models import ComentarioModel, EmpresaModel, TicketModel
+from soporte.infrastructure.models import ComentarioModel, EmpresaModel, TecnicoModel, TicketModel
 
 
 pytestmark = pytest.mark.django_db(databases=["default", "negocio"])
@@ -53,7 +53,7 @@ def test_cors_no_habilita_origen_ajeno_ni_administrador():
     ("get", "/api/tickets/1/comentarios/no-numerico/"),
 ])
 def test_rutas_inexistentes_siempre_entregan_json(method, path):
-    assert_error(getattr(APIClient(), method)(path), 404)
+    assert_error(getattr(APIClient(enforce_csrf_checks=True), method)(path), 404)
 
 
 def test_metodo_formato_y_json_invalidos(api):
@@ -101,6 +101,47 @@ def test_error_de_detalle_indica_indice_y_campo_y_no_guarda_ticket(api, business
     assert TicketModel.objects.count() == 0
 
 
+@pytest.mark.parametrize("resource,model,fields", [
+    ("empresas", EmpresaModel, {"razon_social": "Empresa demo", "plan": "BASICO"}),
+    ("tecnicos", TecnicoModel, {"nombre": "Técnico demo", "email": "demo@example.invalid"}),
+])
+def test_formato_de_rut_y_duplicados_con_distinta_escritura(api, resource, model, fields):
+    endpoint = f"/api/{resource}/"
+    for invalid in ("sin-formato", "12.34.5678-K", "12345678-X", "123456789-1"):
+        assert_error(api.post(endpoint, fields | {"rut": invalid}, format="json"), 400, "rut")
+    created = api.post(endpoint, fields | {"rut": "12345670-k"}, format="json")
+    assert created.status_code == 201
+    assert created.data["rut"] == "12.345.670-K"
+    assert_error(api.post(endpoint, fields | {"rut": "12.345.670-K"}, format="json"), 409, "rut")
+    model.objects.filter(rut="12.345.670-K").update(rut="12345670-k")
+    assert_error(api.post(endpoint, fields | {"rut": "12.345.670-K"}, format="json"), 409, "rut")
+    assert model.objects.count() == 1
+
+
+def test_comentario_sin_texto_en_patch_no_deja_cambios_parciales(api, business_data):
+    created = api.post("/api/tickets/", business_data | {"tecnico_id": None}, format="json").data
+    url = f"/api/tickets/{created['id_ticket']}/"
+    response = api.patch(url, {"titulo": "Cambio sin guardar", "comentarios": [{"texto": "Completo"}, {}]}, format="json")
+    assert_error(response, 400, "comentarios.1.texto")
+    assert api.get(url).data == created
+
+
+def test_r3_contraste_de_vencimiento_usa_sla_y_revierte_los_cambios(api, business_data):
+    created = api.post("/api/tickets/", business_data | {"tecnico_id": None}, format="json").data
+    url = f"/api/tickets/{created['id_ticket']}/"
+    assert created["vencido"] is False
+    assert_error(api.patch(url, {"titulo": "Cambio sin guardar", "vencido": True}, format="json"), 409, "vencido")
+    assert api.get(url).data["titulo"] == created["titulo"]
+    TicketModel.objects.filter(pk=created["id_ticket"]).update(fecha_creacion=timezone.now() - timedelta(hours=5))
+    assert api.get(url).data["vencido"] is True
+    assert_error(api.patch(url, {"vencido": False}, format="json"), 409, "vencido")
+    response = api.patch(url, {"tecnico_id": business_data["tecnico_id"], "vencido": True}, format="json")
+    assert response.status_code == 200 and response.data["estado"] == "ASIGNADO"
+    assert api.patch(url, {"estado": "EN_PROGRESO"}, format="json").status_code == 200
+    response = api.patch(url, {"estado": "RESUELTO", "vencido": False, "comentarios": [{"texto": "Resuelto"}]}, format="json")
+    assert response.status_code == 200 and response.data["vencido"] is False
+
+
 def test_comentarios_busqueda_filtros_orden_y_pagina_sin_mezclar_tickets(api, business_data):
     first = api.post("/api/tickets/", business_data, format="json").data["id_ticket"]
     second = api.post("/api/tickets/", business_data, format="json").data["id_ticket"]
@@ -121,6 +162,7 @@ def test_comentarios_busqueda_filtros_orden_y_pagina_sin_mezclar_tickets(api, bu
     assert [row["numero"] for row in api.get(url, {"search": "red Ana"}).data["results"]] == [1]
     assert api.get(url, {"numero": 3}).data["results"][0]["autor"] == "Luis"
     assert api.get(url, {"ordering": "texto; DROP TABLE COMENTARIO"}).status_code == 200
+    assert api.get(url, {"ordering": "--numero"}).status_code == 200
     assert_error(api.get(url, {"numero": "no"}), 400, "numero")
 
 
